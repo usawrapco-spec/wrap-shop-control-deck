@@ -1437,14 +1437,23 @@ body.jarvis-on #app {
   margin-top: 4px;
 }
 .btn.jarvis-toggle {
+  position: relative;
+  z-index: 6;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border-color: rgba(126, 200, 227, 0.35);
+  border-color: rgba(126, 200, 227, 0.55);
   color: var(--cyan);
   font-family: var(--font-mono);
   letter-spacing: 0.08em;
-  padding: 4px 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+  pointer-events: auto;
+  user-select: none;
+  -webkit-tap-highlight-color: rgba(126, 200, 227, 0.25);
+}
+.btn.jarvis-toggle * {
+  pointer-events: none; /* clicks always hit the button, not child spans */
 }
 .btn.jarvis-toggle .jarvis-toggle-state {
   font-size: 0.65rem;

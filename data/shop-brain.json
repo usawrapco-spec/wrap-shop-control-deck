@@ -7,8 +7,8 @@
     "mission": "Delco #1 Soft Ask (call + email) \u00b7 HOLD auto-send \u00b7 11 waiting Chance GO \u00b7 outbound paused \u00b7 AI OFF",
     "aiEngage": "off",
     "answerCalls": "off",
-    "controlSpec": "v0.8-jarvis",
-    "version": "0.8-jarvis",
+    "controlSpec": "v0.8.1-jarvis",
+    "version": "0.8.1-jarvis",
     "defaultJobId": "job-delco-pr0014",
     "delcoStallHours": 48,
     "jarvis": {
@@ -16,7 +16,7 @@
       "voice": "Grok Bot",
       "body": "Control Deck UI \u00b7 whiteboard Soft Ask walkthrough",
       "hubLabel": "Jarvis \u00b7 Grok hub",
-      "defaultOn": false,
+      "defaultOn": true,
       "beepMutedDefault": true
     }
   },

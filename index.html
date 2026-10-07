@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Control Deck v0.8-jarvis — USA Wrap Co</title>
+  <title>Control Deck v0.8.1-jarvis — USA Wrap Co</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 </head>
-<body>
+<body class="jarvis-on">
   <div id="app">
     <div class="vault-grid" aria-hidden="true"></div>
     <div class="vault-scan" aria-hidden="true"></div>
@@ -19,7 +19,7 @@
         <span class="logo-mark" aria-hidden="true">◈</span>
         <div>
           <h1>CONTROL DECK</h1>
-          <p class="tagline">v0.8-jarvis · AI OFF · no live send</p>
+          <p class="tagline">v0.8.1-jarvis · AI OFF · no live send</p>
         </div>
       </div>
       <div class="mission-chip" id="mission-chip" title="Shop mission">
@@ -38,10 +38,10 @@
       </div>
       <div class="top-actions">
         <button type="button" id="btn-board" class="btn ghost" title="On board">BOARD</button>
-        <button type="button" id="btn-jarvis" class="btn jarvis-toggle" aria-pressed="false" title="Turn Jarvis on — Grok Bot voice · deck is the body">
+        <button type="button" id="btn-jarvis" class="btn jarvis-toggle on" aria-pressed="true" title="Jarvis ON/OFF — Grok Bot voice · deck is the body · tap to toggle">
           <span class="jarvis-toggle-mark" aria-hidden="true">◈</span>
           <span class="jarvis-toggle-label">JARVIS</span>
-          <span class="jarvis-toggle-state" id="jarvis-toggle-state">OFF</span>
+          <span class="jarvis-toggle-state" id="jarvis-toggle-state">ON</span>
         </button>
         <div id="ai-off-badge" class="ai-off-badge" title="Engage OFF · Answer calls Off · hardcoded — never wire live AI ON">
           AI OFF
@@ -51,7 +51,7 @@
       </div>
     </header>
 
-    <section id="jarvis-strip" class="jarvis-strip jarvis-off" aria-label="Jarvis companion" hidden>
+    <section id="jarvis-strip" class="jarvis-strip" aria-label="Jarvis companion">
       <div class="jarvis-presence">
         <div class="jarvis-avatar" aria-hidden="true">◈</div>
         <div class="jarvis-id">

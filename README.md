@@ -1,4 +1,4 @@
-# USA Wrap Co Control Deck v0.8-jarvis
+# USA Wrap Co Control Deck v0.8.1-jarvis
 
 Stupid-simple **command station** for Chance — sits beside Wrapstart while you walk the **Delco PR-0014** Soft Ask.
 

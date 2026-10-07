@@ -2,7 +2,7 @@ const FEEDBACK_KEY = "wrapShopControlDeckFeedback_v03";
 const STUB_TOAST_GO = "Queued for Chance — no live send";
 const STUB_TOAST_HOLD = "Parked — HOLD queued for Chance";
 const DATA_URL = "./data/shop-brain.json";
-const VERSION_TAG = "v0.8-jarvis";
+const VERSION_TAG = "v0.8.1-jarvis";
 const JARVIS_KEY = "wrapShopControlDeckJarvis_v08";
 const JARVIS_MUTE_KEY = "wrapShopControlDeckJarvisMute_v08";
 
@@ -131,9 +131,11 @@ function saveFeedback() {
 
 function loadJarvisOn() {
   try {
-    return localStorage.getItem(JARVIS_KEY) === "on";
+    const v = localStorage.getItem(JARVIS_KEY);
+    if (v === null) return true; // default ON — Chance: wake Jarvis unless user turned it off
+    return v === "on";
   } catch {
-    return false;
+    return true;
   }
 }
 
@@ -1046,8 +1048,13 @@ function wireCompanionControls() {
   if (hold) hold.addEventListener("click", () => stubGateAction("companion-hold"));
   if (gateGo) gateGo.addEventListener("click", () => stubGateAction("detail-go"));
   if (gateHold) gateHold.addEventListener("click", () => stubGateAction("detail-hold"));
-  if (jarvisBtn) {
-    jarvisBtn.addEventListener("click", () => setJarvisOn(!jarvisOn));
+  if (jarvisBtn && !jarvisBtn.dataset.wired) {
+    jarvisBtn.dataset.wired = "1";
+    jarvisBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setJarvisOn(!jarvisOn);
+    });
   }
   if (muteBtn) {
     muteBtn.addEventListener("click", () => {
@@ -1157,6 +1164,16 @@ function focusDelcoOnLoad() {
 }
 
 async function main() {
+  // Wire Jarvis / dock controls BEFORE data fetch so the toggle always works
+  // even if shop-brain.json fails (previous bug: early return left btn-jarvis dead).
+  wireCompanionControls();
+  wireSimpleUi();
+  applyJarvisMode();
+  setStepsOpen(jarvisOn);
+  setDetailExtrasOpen(false);
+  setBoardOpen(false);
+  if (detailPanel) detailPanel.classList.add("hidden");
+
   try {
     const res = await fetch(DATA_URL);
     if (!res.ok) throw new Error("Failed to load shop-brain.json — serve over HTTP");
@@ -1168,12 +1185,16 @@ async function main() {
     if (textEl) textEl.textContent = msg;
     else if (chip) chip.textContent = msg;
     console.error(err);
+    applyJarvisMode();
+    showToast(
+      jarvisOn
+        ? `${VERSION_TAG} — Jarvis ON · data missing · AI OFF`
+        : `${VERSION_TAG} — tap JARVIS · data missing · AI OFF`
+    );
     return;
   }
 
   populateUI();
-  wireCompanionControls();
-  wireSimpleUi();
   renderCompanion(false);
   applyJarvisMode();
   syncOpsMeters();
