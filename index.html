@@ -3,56 +3,81 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Control Deck v0.6-brain — USA Wrap Co</title>
+  <title>Control Deck v0.7-vault — USA Wrap Co</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
 </head>
 <body>
   <div id="app">
+    <div class="vault-grid" aria-hidden="true"></div>
+    <div class="vault-scan" aria-hidden="true"></div>
+
     <header id="top-bar">
       <div class="brand">
-        <span class="logo-orb" aria-hidden="true"></span>
+        <span class="logo-mark" aria-hidden="true">◈</span>
         <div>
-          <h1>Control Deck</h1>
-          <p class="tagline">v0.6-brain · AI OFF · no live send</p>
+          <h1>CONTROL DECK</h1>
+          <p class="tagline">v0.7-vault · AI OFF · no live send</p>
         </div>
       </div>
-      <div class="mission-chip" id="mission-chip" title="Shop mission">Loading…</div>
+      <div class="mission-chip" id="mission-chip" title="Shop mission">
+        <span class="mission-prefix">STATUS //</span>
+        <span class="mission-text">Loading…</span>
+      </div>
       <div class="ops-meters" id="ops-meters" aria-label="Ops meters">
         <div class="meter" title="Jobs that need Chance">
-          <span class="meter-k">Need you</span>
+          <span class="meter-k">NEED YOU</span>
           <span class="meter-v" id="meter-need-you">—</span>
         </div>
         <div class="meter meter-focus" title="Delco stall clock">
-          <span class="meter-k">Delco</span>
+          <span class="meter-k">DELCO</span>
           <span class="meter-v" id="meter-delco">—</span>
         </div>
       </div>
       <div class="top-actions">
-        <button type="button" id="btn-board" class="btn ghost" title="On board">Board</button>
+        <button type="button" id="btn-board" class="btn ghost" title="On board">BOARD</button>
         <div id="ai-off-badge" class="ai-off-badge" title="Engage OFF · Answer calls Off · hardcoded — never wire live AI ON">
           AI OFF
           <span class="ai-off-sub">Engage OFF · Answer Off</span>
         </div>
-        <button type="button" id="btn-more" class="btn ghost" title="Lanes, rules, future">More</button>
+        <button type="button" id="btn-more" class="btn ghost" title="Lanes, rules, future">MORE</button>
       </div>
     </header>
 
-    <main id="stage-wrap">
-      <canvas id="c"></canvas>
-      <div id="hud-hint">Drag to orbit · quiet shop map · AI OFF</div>
+    <main id="stage-wrap" aria-label="Mission rail">
+      <div class="stage-head">
+        <div class="stage-title">
+          <span class="stage-kicker">MISSION RAIL</span>
+          <h2>Lead → Install pipeline</h2>
+        </div>
+        <p class="stage-note" id="hud-hint">Delco active node · ranked board beside rail · AI OFF</p>
+      </div>
+
+      <div class="stage-body">
+        <section class="mission-rail" id="mission-rail" aria-label="Pipeline stages">
+          <!-- filled by app.js -->
+        </section>
+
+        <aside class="rank-panel" aria-label="Ranked jobs">
+          <div class="rank-head">
+            <span class="rank-kicker">BOARD // TOP</span>
+            <span class="rank-sub" id="rank-asof">—</span>
+          </div>
+          <div id="rank-list" class="rank-list"></div>
+        </aside>
+      </div>
     </main>
 
     <section id="simple-dock" aria-label="What to do now">
-      <button type="button" id="hot-card" class="hot-card glass" title="Focus Delco">
+      <button type="button" id="hot-card" class="hot-card" title="Focus Delco">
         <span class="hot-kicker">What’s hot</span>
         <span class="hot-title" id="hot-title">Delco PR-0014</span>
         <span class="hot-sub" id="hot-sub">Soft Ask · not sent</span>
       </button>
 
-      <div class="next-card glass">
+      <div class="next-card">
         <span class="next-kicker">What to do next</span>
         <p class="next-action" id="next-action">Loading…</p>
         <div class="next-meta">
@@ -112,7 +137,6 @@
         <button type="button" id="btn-close-more" class="btn-icon" title="Close">✕</button>
       </div>
       <div class="more-actions">
-        <button type="button" id="btn-reset-cam" class="btn ghost">⟲ Reset camera</button>
         <button type="button" id="btn-export" class="btn ghost">⬇ Export feedback</button>
         <button type="button" id="btn-mic" class="btn mic" title="voice coming" disabled aria-disabled="true">🎤 voice coming</button>
       </div>
@@ -128,7 +152,7 @@
     <aside id="detail-panel" class="sr-only" aria-hidden="true"></aside>
     <aside id="lanes-panel" class="sr-only" aria-hidden="true"><h2 class="rules-heading">Hard Rules</h2></aside>
     <aside id="companion-panel" class="sr-only" aria-hidden="true">
-      <div class="companion-head"><div class="companion-avatar">🧠</div><h2>Grok</h2><span class="companion-live">script</span></div>
+      <div class="companion-head"><div class="companion-avatar">◆</div><h2>Grok</h2><span class="companion-live">script</span></div>
       <p class="companion-sub"></p>
       <p class="companion-foot"></p>
       <div class="companion-nav"></div>
@@ -157,14 +181,6 @@
     <div id="toast" class="hidden"></div>
   </div>
 
-  <script type="importmap">
-  {
-    "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
-    }
-  }
-  </script>
   <script type="module" src="app.js"></script>
 </body>
 </html>
