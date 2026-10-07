@@ -1,15 +1,16 @@
 {
   "meta": {
     "title": "USA Wrap Co Control Deck",
-    "subtitle": "Simple companion \u00b7 Grok thinking beside Wrapstart",
+    "subtitle": "Command station \u00b7 Delco boss quest \u00b7 AI OFF \u00b7 no live send",
     "date": "2026-10-06",
     "owner": "Chance Wallace",
-    "mission": "Kind + profitable. Quality, not cheapest. Soft Ask. Full scope = better deal. Delco close companion \u2014 AI OFF \u00b7 no live send.",
+    "mission": "Kind + profitable. Soft Ask. Delco boss close. Quest markers = jobs needing Chance. AI OFF \u00b7 no live send.",
     "aiEngage": "off",
     "answerCalls": "off",
-    "controlSpec": "v0.4-simple",
-    "version": "0.4-simple",
-    "defaultJobId": "job-delco-pr0014"
+    "controlSpec": "v0.5-game",
+    "version": "0.5-game",
+    "defaultJobId": "job-delco-pr0014",
+    "delcoStallHours": 48
   },
   "lanes": [
     {
@@ -550,8 +551,8 @@
     {
       "phase": "1",
       "emoji": "\ud83d\udd79\ufe0f",
-      "title": "Control deck v0.4-simple",
-      "blurb": "First screen: what\u2019s hot, what to do next, GO/HOLD. Steps under Show steps. AI OFF. No live send."
+      "title": "Control deck v0.5-game",
+      "blurb": "Simple dock + useful game HUD: mission board, quest markers, XP for real scrub/Soft Ask/GO/HOLD. AI OFF. No live send."
     },
     {
       "phase": "2",

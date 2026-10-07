@@ -1,14 +1,16 @@
-# USA Wrap Co Control Deck v0.4-simple
+# USA Wrap Co Control Deck v0.5-game
 
-Stupid-simple **companion** for Chance — sits beside Wrapstart while you walk the **Delco PR-0014** close.
+Stupid-simple **command station** for Chance — sits beside Wrapstart while you walk the **Delco PR-0014** close. Game HUD framing makes jobs feel playable; every beat maps to a real ops action.
 
 First screen = three things only:
-1. **What’s hot** (Delco)
+1. **What’s hot** (Delco boss)
 2. **What to do next** (one plain-English line)
 3. **GO / HOLD** (stubs — no live send)
 
-Warm 3D shop map stays. Steps, lanes, rules, future live under **Show steps** / **More**.  
+Warm 3D shop map + quest markers, minimap, mission board under **Quests**. Steps / lanes / rules under **Show steps** / **More**.  
 **AI stays OFF. No live customer sends.**
+
+See **[GAME_DESIGN.md](./GAME_DESIGN.md)** for how the game layer maps to shop ops.
 
 ## Open it (Chance)
 
@@ -23,27 +25,20 @@ python3 -m http.server 8878
 
 Open **http://localhost:8878/** beside Wrapstart.
 
-- Big red **AI OFF** badge = Engage OFF · Answer Off (hardcoded — never wires live AI ON)
-- **No customer send** — GO / HOLD toast *“Coming — no live send tonight”*
-- **Show steps** expands the Delco Soft Ask companion path (one step at a time)
-- **More** = lanes, hard rules, future roadmap, export feedback, reset camera
+- Big red **AI OFF** badge = Engage OFF · Answer Off (hardcoded)
+- **No customer send** — GO / HOLD toast *“Queued for Chance — no live send”*
+- **Quests** = Delco boss + side jobs with $ and next action
+- **XP / streak** (localStorage) for scrub, Soft Ask steps, GO/HOLD stubs — not fake revenue
+- Sound muted by default (🔇 toggle)
 
 ## What’s preloaded
 
 | Item | Value |
 |---|---|
 | Proposal | **PR-0014** |
-| Hot job | Delco close prep |
+| Hot job | Delco close prep (Legendary / boss) |
 | Status | not sent yet |
 | Default | Delco opens on load |
-
-## How to use tonight
-
-1. Open the URL — dock shows Delco + next action + GO/HOLD.
-2. Tap **What’s hot** to focus Delco on the map.
-3. Tap **GO** or **HOLD** anytime — stub toast only; nothing hits Wrapstart, Gmail, or SMS.
-4. Need detail? **Show steps** → optional **Show job details** / think-path feedback.
-5. **More** for lanes, rules, future, export JSON (localStorage `wrapShopControlDeckFeedback_v03`).
 
 ## Safety (non-negotiable)
 
@@ -54,10 +49,11 @@ Open **http://localhost:8878/** beside Wrapstart.
 
 ## Files
 
-- `index.html` — simple shell + dock
-- `app.js` — Three.js shop + companion + stubs
-- `style.css` — clean first-screen UI
+- `index.html` — simple dock + game HUD shell
+- `app.js` — Three.js shop + companion + quest/XP layer + stubs
+- `style.css` — neon shop polish
 - `data/shop-brain.json` — lanes, stations, Delco job, companion script
+- `GAME_DESIGN.md` — Chance-facing game ↔ ops map
 - `README.md` — this file
 
-Evolved from `wrap-shop-brain-sim-2026-10-06/` · cues from `wrap-shop-control-future-2026-10-06/`.
+Evolved from v0.4-simple · cues from wrap-shop-brain-sim / control-future.

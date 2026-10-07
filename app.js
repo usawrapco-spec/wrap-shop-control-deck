@@ -2,8 +2,31 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 const FEEDBACK_KEY = "wrapShopControlDeckFeedback_v03";
-const STUB_TOAST = "Coming — no live send tonight";
+const GAME_KEY = "wrapShopControlDeckGame_v05";
+const STUB_TOAST_GO = "Queued for Chance — no live send";
+const STUB_TOAST_HOLD = "Parked — HOLD queued for Chance";
 const DATA_URL = "./data/shop-brain.json";
+const VERSION_TAG = "v0.5-game";
+
+/** XP awards map to real ops actions — not fake revenue */
+const XP = {
+  scrub: 25,
+  softAsk: 40,
+  go: 60,
+  hold: 20,
+  stepAdvance: 15,
+  focusBoss: 5,
+};
+
+const ACHIEVEMENTS = [
+  { id: "first-scrub", title: "First scrub", detail: "Opened a think-path / scrubbed a step", xp: 0 },
+  { id: "delco-packet", title: "Delco packet ready", detail: "Boss quest focused — PR-0014 Soft Ask path", xp: 0 },
+  { id: "ai-off-locked", title: "AI OFF locked", detail: "Confirmed Engage OFF · Answer Off", xp: 0 },
+  { id: "first-go", title: "Gate tap — GO", detail: "GO stub queued for Chance (no live send)", xp: 0 },
+  { id: "first-hold", title: "Gate tap — HOLD", detail: "HOLD stub parked for Chance", xp: 0 },
+  { id: "soft-ask-draft", title: "Soft Ask drafted", detail: "Walked Soft Ask companion step", xp: 0 },
+  { id: "streak-3", title: "3-day ops streak", detail: "Real actions three days in a row", xp: 0 },
+];
 
 /** @type {any} */
 let shopData = null;
@@ -26,6 +49,435 @@ let activeStep = null;
 let toastTimer = null;
 let companionStep = 0;
 let companionRevealed = 0; // highest index revealed
+
+// --- Game / ops progress (localStorage) ---
+/** @type {{ xp:number, level:number, streak:number, lastActionDay:string, actions:Record<string,number>, achievements:string[], muted:boolean, questProgress:Record<string,number> }} */
+let game = loadGame();
+let achieveTimer = null;
+/** @type {THREE.Object3D[]} */
+const questMarkers = [];
+let objectiveTarget = null; // THREE.Object3D for Delco
+let minimapCtx = null;
+
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(GAME_KEY);
+    if (raw) {
+      const g = JSON.parse(raw);
+      return {
+        xp: g.xp || 0,
+        level: g.level || 1,
+        streak: g.streak || 0,
+        lastActionDay: g.lastActionDay || "",
+        actions: g.actions || {},
+        achievements: g.achievements || [],
+        muted: g.muted !== false, // default muted
+        questProgress: g.questProgress || {},
+      };
+    }
+  } catch {}
+  return {
+    xp: 0, level: 1, streak: 0, lastActionDay: "",
+    actions: {}, achievements: [], muted: true, questProgress: {},
+  };
+}
+
+function saveGame() {
+  localStorage.setItem(GAME_KEY, JSON.stringify(game));
+}
+
+function xpForLevel(lvl) {
+  return 100 + (lvl - 1) * 75;
+}
+
+function bumpStreak() {
+  const t = todayKey();
+  if (game.lastActionDay === t) return;
+  const y = new Date();
+  y.setDate(y.getDate() - 1);
+  const yKey = `${y.getFullYear()}-${String(y.getMonth()+1).padStart(2,"0")}-${String(y.getDate()).padStart(2,"0")}`;
+  if (game.lastActionDay === yKey) game.streak = (game.streak || 0) + 1;
+  else game.streak = 1;
+  game.lastActionDay = t;
+  if (game.streak >= 3) unlockAchieve("streak-3");
+}
+
+function addXp(amount, reason) {
+  if (!amount) return;
+  bumpStreak();
+  game.xp += amount;
+  let leveled = false;
+  while (game.xp >= xpForLevel(game.level)) {
+    game.xp -= xpForLevel(game.level);
+    game.level += 1;
+    leveled = true;
+  }
+  game.actions[reason] = (game.actions[reason] || 0) + 1;
+  saveGame();
+  syncGameHud();
+  if (leveled) {
+    playBeep("level");
+    showToast(`Level ${game.level} — keep clearing real next steps`, "xp");
+    spawnParticles(28);
+  } else if (reason === "go" || reason === "hold") {
+    /* juice handled by stub */
+  } else {
+    showToast(`+${amount} XP · ${reason.replace(/-/g, " ")}`, "xp");
+  }
+}
+
+function unlockAchieve(id) {
+  if (game.achievements.includes(id)) return;
+  const def = ACHIEVEMENTS.find((a) => a.id === id);
+  if (!def) return;
+  game.achievements.push(id);
+  saveGame();
+  showAchieveToast(def.title, def.detail);
+  playBeep("achieve");
+  renderAchieveList();
+}
+
+function showAchieveToast(title, detail) {
+  const el = document.getElementById("achieve-toast");
+  if (!el) return;
+  el.innerHTML = `🏆 ${escapeHtml(title)}<span class="at-sub">${escapeHtml(detail)}</span>`;
+  el.classList.remove("hidden");
+  clearTimeout(achieveTimer);
+  achieveTimer = setTimeout(() => el.classList.add("hidden"), 3200);
+}
+
+function syncGameHud() {
+  const lvl = document.getElementById("meter-level");
+  const xpN = document.getElementById("meter-xp");
+  const fill = document.getElementById("xp-fill");
+  const streak = document.getElementById("streak-chip");
+  const need = document.getElementById("meter-need-you");
+  const delco = document.getElementById("meter-delco");
+  const soundBtn = document.getElementById("btn-sound");
+  if (lvl) lvl.textContent = String(game.level);
+  if (xpN) xpN.textContent = `${game.xp}/${xpForLevel(game.level)}`;
+  if (fill) fill.style.width = `${Math.min(100, (game.xp / xpForLevel(game.level)) * 100)}%`;
+  if (streak) streak.textContent = `🔥 streak ${game.streak || 0}`;
+  if (soundBtn) {
+    soundBtn.textContent = game.muted ? "🔇" : "🔊";
+    soundBtn.setAttribute("aria-pressed", game.muted ? "false" : "true");
+    soundBtn.title = game.muted ? "UI sounds muted — click to unmute" : "UI sounds on — click to mute";
+  }
+  if (shopData) {
+    const needing = shopData.jobs.filter((j) => jobNeedsChance(j)).length;
+    if (need) need.textContent = String(needing);
+    if (delco) {
+      const stall = (shopData.meta && shopData.meta.delcoStallHours) || 48;
+      delco.textContent = `~${stall}h stall`;
+    }
+  }
+}
+
+function jobNeedsChance(job) {
+  if (!job) return false;
+  const s = job.status || "";
+  return s === "close-prep" || s === "ready" || s === "pending-send" || s === "hold" || !!job.id?.includes("delco");
+}
+
+function dealTier(job) {
+  if (!job) return { id: "common", label: "COMMON" };
+  if (job.id?.includes("delco") || (job.pricing && job.pricing.fixedPretax >= 20000)) {
+    return { id: "legendary", label: "LEGENDARY" };
+  }
+  if (job.status === "pending-send" || (job.pricing && job.pricing.fixedPretax >= 8000)) {
+    return { id: "epic", label: "EPIC" };
+  }
+  if (job.type === "wrap" || job.type === "dekwave" || job.type === "upfit") {
+    return { id: "rare", label: "RARE" };
+  }
+  return { id: "common", label: "COMMON" };
+}
+
+function moneyLine(job) {
+  if (job?.pricing) {
+    return `Fixed $${Number(job.pricing.fixedPretax).toLocaleString()} · Folding $${Number(job.pricing.foldingPretax).toLocaleString()} pretax`;
+  }
+  if (job?.id?.includes("delco")) return "Fixed $29,807 · Folding $44,232 pretax · 25-van fleet path";
+  if (job?.status === "pending-send") return "Proposal scrubbed · waiting Chance SEND";
+  if (job?.type === "practice") return "Sandbox only · wallco92";
+  return job?.summary?.slice(0, 80) || "";
+}
+
+function nextActionForJob(job, stepIndex) {
+  if (!job) return "Pick a job on the map or Quests.";
+  if (job.id?.includes("delco")) {
+    const lines = [
+      "Next: Soft Ask Delco — call + proposal link. Not sent yet.",
+      "Next: You decide — GO queues Soft Ask for Chance, or HOLD parks it.",
+      "Next: GO is practice queue only. Real send stays in Wrapstart.",
+      "Next: After they accept — take 50% deposit, then design.",
+    ];
+    const i = Math.max(0, Math.min(stepIndex || 0, lines.length - 1));
+    return lines[i];
+  }
+  if (job.status === "pending-send") return "Next: Review packet, then GO when ready to send (stub queues only).";
+  if (job.status === "hold") return "Next: Unblock HOLD — check margin / scope, then re-queue.";
+  if (job.status === "active" && job.type === "wrap") return "Next: Finish Soft Ask draft, Margin Guard, park at Chance Gate.";
+  if (job.type === "dekwave") return "Next: Soft Ask ballpark on DekWave brand — deposit before design.";
+  if (job.status === "practice") return "Next: Practice on wallco92 only — never touch real customers.";
+  const step = (job.thinkPath || [])[0];
+  return step ? `Next: ${step.label}` : `Next: Open ${job.title.split("—")[0].trim()}`;
+}
+
+function questProgressPct(job) {
+  if (!job) return 0;
+  const saved = game.questProgress[job.id];
+  if (typeof saved === "number") return Math.min(100, saved);
+  if (job.id?.includes("delco")) {
+    const steps = (shopData && shopData.companionScript) || [];
+    if (!steps.length) return 10;
+    return Math.round(((companionStep + 1) / steps.length) * 100);
+  }
+  const path = job.thinkPath || [];
+  if (!path.length) return jobNeedsChance(job) ? 25 : 10;
+  return 20;
+}
+
+function setQuestProgress(jobId, pct) {
+  game.questProgress[jobId] = Math.min(100, Math.max(0, pct));
+  saveGame();
+}
+
+function playBeep(kind) {
+  if (game.muted) return;
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    if (!playBeep.ctx) playBeep.ctx = new Ctx();
+    const ctx = playBeep.ctx;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g);
+    g.connect(ctx.destination);
+    const now = ctx.currentTime;
+    if (kind === "go") {
+      o.frequency.setValueAtTime(523, now);
+      o.frequency.setValueAtTime(784, now + 0.08);
+      g.gain.setValueAtTime(0.04, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      o.start(now); o.stop(now + 0.23);
+    } else if (kind === "hold") {
+      o.frequency.setValueAtTime(320, now);
+      g.gain.setValueAtTime(0.03, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+      o.start(now); o.stop(now + 0.19);
+    } else if (kind === "level" || kind === "achieve") {
+      o.type = "triangle";
+      o.frequency.setValueAtTime(440, now);
+      o.frequency.setValueAtTime(660, now + 0.1);
+      o.frequency.setValueAtTime(880, now + 0.2);
+      g.gain.setValueAtTime(0.045, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      o.start(now); o.stop(now + 0.36);
+    } else {
+      o.frequency.setValueAtTime(600, now);
+      g.gain.setValueAtTime(0.025, now);
+      g.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+      o.start(now); o.stop(now + 0.11);
+    }
+  } catch {}
+}
+
+function spawnParticles(n = 16) {
+  const layer = document.getElementById("fx-layer");
+  if (!layer) return;
+  const cx = layer.clientWidth * 0.5;
+  const cy = layer.clientHeight * 0.55;
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement("span");
+    s.className = "fx-spark";
+    const angle = (Math.PI * 2 * i) / n + Math.random() * 0.4;
+    const dist = 40 + Math.random() * 90;
+    s.style.left = cx + "px";
+    s.style.top = cy + "px";
+    s.style.setProperty("--dx", `${Math.cos(angle) * dist}px`);
+    s.style.setProperty("--dy", `${Math.sin(angle) * dist}px`);
+    s.style.background = i % 2 ? "#5ec8ff" : "#ffeaa7";
+    layer.appendChild(s);
+    setTimeout(() => s.remove(), 750);
+  }
+}
+
+function shakeLite() {
+  const wrap = document.getElementById("stage-wrap");
+  if (!wrap) return;
+  wrap.classList.remove("shake-lite");
+  void wrap.offsetWidth;
+  wrap.classList.add("shake-lite");
+  setTimeout(() => wrap.classList.remove("shake-lite"), 400);
+}
+
+function makeQuestMarker(job, stationPos) {
+  const group = new THREE.Group();
+  const offset = job.id?.includes("delco") ? 0 : (Math.random() - 0.5) * 1.5;
+  group.position.set(stationPos[0] + offset, 3.8, stationPos[2] + 2.2);
+  const tier = dealTier(job);
+  const color = tier.id === "legendary" ? 0xffeaa7 : tier.id === "epic" ? 0xa29bfe : tier.id === "rare" ? 0x5ec8ff : 0xc9b8e8;
+  const beam = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.08, 0.22, 2.4, 8),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.55 })
+  );
+  beam.position.y = 0;
+  group.add(beam);
+  const diamond = new THREE.Mesh(
+    new THREE.OctahedronGeometry(0.35, 0),
+    new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.95 })
+  );
+  diamond.position.y = 1.4;
+  group.add(diamond);
+  const light = new THREE.PointLight(color, job.id?.includes("delco") ? 0.9 : 0.45, 8);
+  light.position.y = 1.2;
+  group.add(light);
+  group.userData = { kind: "marker", jobId: job.id, diamond, bobPhase: Math.random() * Math.PI * 2, baseY: group.position.y };
+  scene.add(group);
+  questMarkers.push(group);
+  if (job.id?.includes("delco")) objectiveTarget = group;
+  return group;
+}
+
+function renderQuestBoard() {
+  const bossEl = document.getElementById("quest-boss");
+  const listEl = document.getElementById("quest-list");
+  if (!bossEl || !listEl || !shopData) return;
+  const jobs = shopData.jobs || [];
+  const boss = jobs.find((j) => j.id === ((shopData.meta && shopData.meta.defaultJobId) || "job-delco-pr0014")) || jobs[0];
+  const sides = jobs.filter((j) => j !== boss);
+  bossEl.innerHTML = boss ? questCardHtml(boss, true) : "";
+  listEl.innerHTML = sides.map((j) => questCardHtml(j, false)).join("");
+  bossEl.querySelectorAll(".quest-card").forEach((btn) => {
+    btn.addEventListener("click", () => focusJobById(btn.getAttribute("data-job")));
+  });
+  listEl.querySelectorAll(".quest-card").forEach((btn) => {
+    btn.addEventListener("click", () => focusJobById(btn.getAttribute("data-job")));
+  });
+  renderAchieveList();
+}
+
+function questCardHtml(job, isBoss) {
+  const tier = dealTier(job);
+  const pct = questProgressPct(job);
+  const next = nextActionForJob(job, job.id?.includes("delco") ? companionStep : 0);
+  const short = (job.title || "").split("—")[0].trim();
+  return `<button type="button" class="quest-card ${isBoss ? "boss" : ""}" data-job="${escapeHtml(job.id)}">
+    <div class="qc-top">
+      <span class="qc-title">${isBoss ? "⚔ BOSS · " : ""}${escapeHtml(short)}</span>
+      <span class="tier-pill ${tier.id}">${tier.label}</span>
+    </div>
+    <p class="qc-next">${escapeHtml(next)}</p>
+    <div class="qc-money">${escapeHtml(moneyLine(job))}</div>
+    <div class="qc-progress" title="${pct}% clear"><i style="width:${pct}%"></i></div>
+  </button>`;
+}
+
+function renderAchieveList() {
+  const el = document.getElementById("achieve-list");
+  if (!el) return;
+  el.innerHTML = ACHIEVEMENTS.map((a) => {
+    const on = game.achievements.includes(a.id);
+    return `<span class="achieve-chip ${on ? "" : "locked"}" title="${escapeHtml(a.detail)}">${on ? "✓ " : ""}${escapeHtml(a.title)}</span>`;
+  }).join("");
+}
+
+function focusJobById(id) {
+  if (!shopData || !id) return;
+  const job = shopData.jobs.find((j) => j.id === id);
+  if (!job) return;
+  openJob(job);
+  const target = clickables.find((g) => g.userData.kind === "job" && g.userData.id === job.id);
+  if (target) {
+    controls.target.lerp(target.position.clone().setY(1), 0.85);
+    camera.position.lerp(new THREE.Vector3(14, 16, 18), 0.35);
+  }
+  setQuestBoardOpen(false);
+  if (job.id?.includes("delco")) {
+    unlockAchieve("delco-packet");
+    addXp(XP.focusBoss, "focus-boss");
+  }
+  showToast(`Focused · ${job.title.split("—")[0].trim()}`);
+}
+
+function setQuestBoardOpen(open) {
+  const board = document.getElementById("quest-board");
+  if (board) board.classList.toggle("hidden", !open);
+  if (open) renderQuestBoard();
+}
+
+function drawMinimap() {
+  const canvas = document.getElementById("minimap");
+  if (!canvas || !shopData) return;
+  if (!minimapCtx) minimapCtx = canvas.getContext("2d");
+  const ctx = minimapCtx;
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+  // bg
+  ctx.fillStyle = "rgba(18, 12, 36, 0.9)";
+  ctx.fillRect(0, 0, w, h);
+  const scale = 3.2;
+  const cx = w / 2;
+  const cy = h / 2;
+  // stations
+  for (const st of shopData.stations) {
+    const x = cx + st.position[0] * scale * 0.35;
+    const y = cy + st.position[2] * scale * 0.35;
+    ctx.fillStyle = st.color || "#5ec8ff";
+    ctx.globalAlpha = 0.55;
+    ctx.beginPath();
+    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  // jobs as quest pips
+  const stationMap = Object.fromEntries(shopData.stations.map((s) => [s.id, s]));
+  for (const job of shopData.jobs) {
+    const st = stationMap[job.station];
+    if (!st) continue;
+    const x = cx + st.position[0] * scale * 0.35;
+    const y = cy + (st.position[2] + 2.5) * scale * 0.35;
+    const tier = dealTier(job);
+    ctx.fillStyle = tier.id === "legendary" ? "#ffeaa7" : tier.id === "epic" ? "#a29bfe" : "#5ec8ff";
+    ctx.beginPath();
+    ctx.arc(x, y, job.id?.includes("delco") ? 5 : 3.2, 0, Math.PI * 2);
+    ctx.fill();
+    if (job.id?.includes("delco")) {
+      ctx.strokeStyle = "#ff9f43";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(x, y, 7, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+  // camera pip
+  const camX = cx + camera.position.x * scale * 0.12;
+  const camY = cy + camera.position.z * scale * 0.12;
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.moveTo(camX, camY - 5);
+  ctx.lineTo(camX + 4, camY + 4);
+  ctx.lineTo(camX - 4, camY + 4);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function updateObjectiveArrow() {
+  const el = document.getElementById("objective-arrow");
+  const name = document.getElementById("obj-name");
+  if (!el) return;
+  if (name) name.textContent = "Delco";
+  // keep visible — useful always
+  el.style.display = "flex";
+}
+
 
 
 // --- Three.js setup ---
@@ -91,11 +543,14 @@ function saveFeedback() {
   localStorage.setItem(FEEDBACK_KEY, JSON.stringify(feedbackStore));
 }
 
-function showToast(msg) {
+function showToast(msg, kind) {
   toast.textContent = msg;
-  toast.classList.remove("hidden");
+  toast.classList.remove("hidden", "toast-go", "toast-hold", "toast-xp");
+  if (kind === "go") toast.classList.add("toast-go");
+  if (kind === "hold") toast.classList.add("toast-hold");
+  if (kind === "xp") toast.classList.add("toast-xp");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.add("hidden"), 2200);
+  toastTimer = setTimeout(() => toast.classList.add("hidden"), 2400);
 }
 
 function hexColor(c) {
@@ -467,6 +922,7 @@ function buildScene() {
   for (const job of shopData.jobs) {
     const st = stationMap[job.station] || shopData.stations[0];
     makeVan(job, st.position);
+    if (jobNeedsChance(job)) makeQuestMarker(job, st.position);
   }
 }
 
@@ -597,22 +1053,26 @@ function syncHotCard(job) {
   const prop = j.wrapstart && j.wrapstart.proposalId ? ` ${j.wrapstart.proposalId}` : "";
   titleEl.textContent = short.includes("Delco") ? `Delco${prop || " PR-0014"}` : short;
   subEl.textContent = plainStatus(j);
+  const tierEl = document.getElementById("hot-tier");
+  if (tierEl) {
+    const tier = dealTier(j);
+    tierEl.textContent = tier.label;
+    tierEl.className = "hot-tier tier-" + tier.id;
+  }
 }
 
 function nextActionPlain(stepIndex) {
-  const lines = [
-    "Next: Soft Ask Delco — call + proposal. Not sent yet.",
-    "Next: You decide — GO to send Soft Ask, or HOLD.",
-    "Next: GO is practice only tonight. Real send stays in Wrapstart.",
-    "Next: After they accept — take 50% deposit, then design.",
-  ];
-  const i = Math.max(0, Math.min(stepIndex || 0, lines.length - 1));
-  return lines[i];
+  const job = activeJob || (shopData && shopData.jobs.find((x) => x.id === ((shopData.meta && shopData.meta.defaultJobId) || "job-delco-pr0014")));
+  return nextActionForJob(job, stepIndex);
 }
 
 function syncNextAction() {
   const el = document.getElementById("next-action");
   if (el) el.textContent = nextActionPlain(companionStep);
+  // keep quest board progress live if open
+  const board = document.getElementById("quest-board");
+  if (board && !board.classList.contains("hidden")) renderQuestBoard();
+  syncGameHud();
 }
 
 function openJob(job) {
@@ -844,6 +1304,7 @@ const btnCloseFuture = document.getElementById("btn-close-future");
 if (btnCloseFuture) btnCloseFuture.addEventListener("click", closeFuturePanel);
 document.getElementById("ai-off-badge").addEventListener("click", () => {
   showToast("AI OFF locked — Engage OFF · Answer Off · never ON from deck");
+  unlockAchieve("ai-off-locked");
 });
 const btnResetCam = document.getElementById("btn-reset-cam");
 if (btnResetCam) {
@@ -883,6 +1344,7 @@ document.addEventListener("keydown", (e) => {
     closeFuturePanel();
     setMoreOpen(false);
     setStepsOpen(false);
+    setQuestBoardOpen(false);
   }
 });
 
@@ -909,6 +1371,20 @@ function animate() {
     }
   }
 
+  for (const m of questMarkers) {
+    const u = m.userData;
+    if (u.bobPhase != null) {
+      m.position.y = u.baseY + Math.sin(t * 2.1 + u.bobPhase) * 0.22;
+    }
+    if (u.diamond) {
+      u.diamond.rotation.y = t * 1.8;
+      u.diamond.rotation.x = Math.sin(t * 1.4) * 0.25;
+    }
+  }
+
+  if (Math.floor(t * 8) % 2 === 0) drawMinimap();
+  updateObjectiveArrow();
+
   controls.update();
   renderer.render(scene, camera);
 }
@@ -916,8 +1392,23 @@ function animate() {
 
 function stubGateAction(kind) {
   // Never call Wrapstart, never send email/SMS
-  showToast(STUB_TOAST);
+  const isGo = String(kind).includes("go");
+  showToast(isGo ? STUB_TOAST_GO : STUB_TOAST_HOLD, isGo ? "go" : "hold");
   console.info("[Control Deck] stub gate:", kind, "— no live send / no API");
+  if (isGo) {
+    addXp(XP.go, "go");
+    unlockAchieve("first-go");
+    playBeep("go");
+    spawnParticles(20);
+    shakeLite();
+    if (activeJob) setQuestProgress(activeJob.id, Math.max(questProgressPct(activeJob), 70));
+  } else {
+    addXp(XP.hold, "hold");
+    unlockAchieve("first-hold");
+    playBeep("hold");
+    if (activeJob) setQuestProgress(activeJob.id, Math.max(questProgressPct(activeJob), 40));
+  }
+  renderQuestBoard();
 }
 
 function getCompanionSteps() {
@@ -963,8 +1454,23 @@ function companionNext() {
     companionStep += 1;
     companionRevealed = Math.max(companionRevealed, companionStep);
     renderCompanion(true);
+    addXp(XP.stepAdvance, "step-advance");
+    playBeep("tick");
+    const s = steps[companionStep];
+    if (s && /soft ask/i.test(s.title + " " + (s.body || ""))) {
+      addXp(XP.softAsk, "soft-ask");
+      unlockAchieve("soft-ask-draft");
+    }
+    if (companionStep === 0 || /scrub|packet|confirm/i.test((s && s.title) || "")) {
+      addXp(XP.scrub, "scrub");
+      unlockAchieve("first-scrub");
+    }
+    const job = activeJob || shopData.jobs.find((j) => j.id?.includes("delco"));
+    if (job) setQuestProgress(job.id, Math.round(((companionStep + 1) / steps.length) * 100));
   } else {
     showToast("End of Delco close script — GO/HOLD still stubbed");
+    const job = activeJob || shopData.jobs.find((j) => j.id?.includes("delco"));
+    if (job) setQuestProgress(job.id, 100);
   }
 }
 
@@ -1029,6 +1535,9 @@ function wireSimpleUi() {
   const closeMore = document.getElementById("btn-close-more");
   const hot = document.getElementById("hot-card");
   const toggleDetail = document.getElementById("btn-toggle-detail");
+  const quests = document.getElementById("btn-quests");
+  const closeQuests = document.getElementById("btn-close-quests");
+  const soundBtn = document.getElementById("btn-sound");
 
   if (showSteps) {
     showSteps.addEventListener("click", () => {
@@ -1039,11 +1548,32 @@ function wireSimpleUi() {
   if (hideSteps) hideSteps.addEventListener("click", () => setStepsOpen(false));
   if (more) more.addEventListener("click", () => setMoreOpen(true));
   if (closeMore) closeMore.addEventListener("click", () => setMoreOpen(false));
+  if (quests) {
+    quests.addEventListener("click", () => {
+      const board = document.getElementById("quest-board");
+      const open = board?.classList.contains("hidden");
+      setQuestBoardOpen(!!open);
+    });
+  }
+  if (closeQuests) closeQuests.addEventListener("click", () => setQuestBoardOpen(false));
+  if (soundBtn) {
+    soundBtn.addEventListener("click", () => {
+      game.muted = !game.muted;
+      saveGame();
+      syncGameHud();
+      if (!game.muted) playBeep("tick");
+      showToast(game.muted ? "Sounds muted" : "Sounds on — soft UI beeps");
+    });
+  }
   if (toggleDetail) {
     toggleDetail.addEventListener("click", () => {
       const extras = document.getElementById("detail-extras");
       const open = extras?.classList.contains("hidden");
       setDetailExtrasOpen(!!open);
+      if (open) {
+        addXp(XP.scrub, "scrub");
+        unlockAchieve("first-scrub");
+      }
     });
   }
   if (hot) {
@@ -1057,7 +1587,9 @@ function wireSimpleUi() {
           controls.target.lerp(target.position.clone().setY(1), 0.85);
           camera.position.lerp(new THREE.Vector3(14, 16, 18), 0.35);
         }
-        showToast("Delco focused");
+        unlockAchieve("delco-packet");
+        showToast("Delco focused — boss quest");
+        playBeep("tick");
       }
     });
   }
@@ -1093,13 +1625,18 @@ async function main() {
   wireCompanionControls();
   wireSimpleUi();
   renderCompanion(false);
+  syncGameHud();
+  renderQuestBoard();
+  updateObjectiveArrow();
   resize();
   if (detailPanel) detailPanel.classList.add("hidden");
   setStepsOpen(false);
   setDetailExtrasOpen(false);
+  setQuestBoardOpen(false);
   animate();
   focusDelcoOnLoad();
-  showToast("Control Deck v0.4-simple — Delco ready · AI OFF · no live send");
+  unlockAchieve("ai-off-locked");
+  showToast("Control Deck v0.5-game — Delco boss · AI OFF · no live send");
 }
 
 main();
