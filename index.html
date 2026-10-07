@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Control Deck v0.9.1-journey — USA Wrap Co</title>
+  <title>Control Deck v0.9.2-timeline — USA Wrap Co</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -27,7 +27,7 @@
         <span class="logo-mark" aria-hidden="true">◈</span>
         <div>
           <h1>CONTROL DECK</h1>
-          <p class="tagline">v0.9.1-journey · AI OFF · no live send</p>
+          <p class="tagline">v0.9.2-timeline · AI OFF · no live send</p>
         </div>
       </div>
       <div class="mission-chip" id="mission-chip" title="Shop mission">
@@ -68,7 +68,7 @@
           <span class="holo-kicker">JARVIS · GROK HUB</span>
           <span class="holo-status" id="jarvis-status" data-mode="briefing">briefing Delco</span>
         </div>
-        <p class="holo-brief" id="jarvis-brief" aria-live="polite">Soft Ask path ready when you are.</p>
+        <p class="holo-brief" id="jarvis-brief" aria-live="polite">Delco Soft Ask bot plan ready — fill call?/email? when you act.</p>
         <div class="holo-controls">
           <button type="button" id="btn-jarvis-mute" class="btn ghost jarvis-mute muted" aria-pressed="true" title="Voice beep muted by default">🔇 MUTE</button>
           <button type="button" id="btn-jarvis-listen" class="btn ghost jarvis-listen" title="Listening UI — Web Speech if available">🎤 LISTEN</button>
@@ -109,7 +109,7 @@
         <div class="next-meta">
           <button type="button" id="btn-show-steps" class="link-btn" aria-expanded="true">Hide Jarvis</button>
           <button type="button" id="btn-comp-prev" class="btn ghost dock-nav">←</button>
-          <span id="companion-step-label" class="companion-step-label">1 / 15</span>
+          <span id="companion-step-label" class="companion-step-label">1 / 17</span>
           <button type="button" id="btn-comp-next" class="btn ghost dock-nav">→</button>
         </div>
       </div>
@@ -137,14 +137,34 @@
       <div class="steps-head">
         <div>
           <h2>Jarvis · Grok hub</h2>
-          <p class="hint-sm">Voice = Grok Bot · body = hologram + whiteboard</p>
+          <p class="hint-sm">Voice = Grok Bot · narrates bot plan · timeline visible · blanks = you</p>
         </div>
         <button type="button" id="btn-hide-steps" class="btn-icon" title="Hide">✕</button>
       </div>
+      <div class="job-synopsis" id="job-synopsis" aria-live="polite">
+        <div class="synopsis-top">
+          <span class="synopsis-kicker">Synopsis</span>
+          <span class="stuck-flag hidden" id="stuck-flag" title="Stuck">STUCK</span>
+        </div>
+        <p class="synopsis-body" id="synopsis-body">Loading…</p>
+        <p class="stuck-reason hidden" id="stuck-reason"></p>
+      </div>
+      <div class="timeline-rail" id="timeline-rail" aria-label="Bot plan timeline — all steps visible"></div>
       <div id="companion-feed" class="companion-feed"></div>
+      <div class="softask-blanks" id="softask-blanks" hidden>
+        <div class="blanks-kicker">Soft Ask blanks · Chance fills only</div>
+        <label class="blank-check"><input type="checkbox" id="blank-call" /> call?</label>
+        <label class="blank-check"><input type="checkbox" id="blank-email" /> email?</label>
+        <span class="blanks-hint">Local only · never sends</span>
+      </div>
+      <div class="lastoffer-preview hidden" id="lastoffer-preview" aria-live="polite">
+        <div class="lo-kicker">Last Offer · review only · preview stub</div>
+        <p class="lo-body" id="lastoffer-body"></p>
+        <button type="button" id="btn-lastoffer-stub" class="btn ghost">Preview Last Offer (stub)</button>
+      </div>
       <div class="steps-nav">
         <button type="button" id="btn-steps-prev" class="btn ghost">← Back</button>
-        <span id="steps-step-label" class="companion-step-label">1 / 15</span>
+        <span id="steps-step-label" class="companion-step-label">1 / 17</span>
         <button type="button" id="btn-steps-next" class="btn primary">Next →</button>
       </div>
       <div id="detail-extras" class="detail-extras hidden">

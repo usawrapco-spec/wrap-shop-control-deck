@@ -4,9 +4,10 @@ const FEEDBACK_KEY = "wrapShopControlDeckFeedback_v03";
 const STUB_TOAST_GO = "Queued for Chance — no live send";
 const STUB_TOAST_HOLD = "Parked — HOLD queued for Chance";
 const DATA_URL = "./data/shop-brain.json";
-const VERSION_TAG = "v0.9.1-journey";
+const VERSION_TAG = "v0.9.2-timeline";
 const JARVIS_KEY = "wrapShopControlDeckJarvis_v09";
 const JARVIS_MUTE_KEY = "wrapShopControlDeckJarvisMute_v09";
+const BLANKS_KEY = "wrapShopControlDeckSoftAskBlanks_v092";
 const WRAP_GUY_URL = "./assets/wrap-guy-pointing.png";
 
 const WHITEBOARD_STEPS = [
@@ -17,10 +18,10 @@ const WHITEBOARD_STEPS = [
 ];
 
 const JARVIS_BRIEFS = [
-  "Briefing Delco — Soft Ask draft is ready. Nothing sent. AI OFF.",
-  "Competitors already in play. Stall clock ~48h. Delco first.",
-  "Your call — GO queues a stub; HOLD parks it. No live send.",
-  "Accept path — 50% deposit, then Design. Soft Ask name stays.",
+  "PR-0014 packet scrubbed — Soft Ask draft ready. Nothing sent. AI OFF.",
+  "Delco = Chance-only. Josh Soft Ask OFF. Only you talk to Puneet.",
+  "Warm Soft Ask plan: call + proposal link. Lead Fixed. Folding optional.",
+  "Margin pretax healthy. Wrap mention-only. Stall ~48h — competitors in play.",
 ];
 
 const DELCO_EMAIL_DRAFT = {
@@ -63,6 +64,8 @@ let wbNeedsRedraw = true;
 let motionMode = "softask";
 let motionParticles = [];
 let liveMotionReady = false;
+/** @type {{call:boolean,email:boolean}} */
+let softAskBlanks = loadSoftAskBlanks();
 
 const toast = document.getElementById("toast");
 const detailPanel = document.getElementById("detail-panel");
@@ -610,6 +613,107 @@ function saveJarvisMuted() {
   } catch { /* ignore */ }
 }
 
+function loadSoftAskBlanks() {
+  try {
+    const raw = localStorage.getItem(BLANKS_KEY);
+    if (!raw) return { call: false, email: false };
+    const o = JSON.parse(raw);
+    return { call: !!o.call, email: !!o.email };
+  } catch {
+    return { call: false, email: false };
+  }
+}
+
+function saveSoftAskBlanks() {
+  try {
+    localStorage.setItem(BLANKS_KEY, JSON.stringify(softAskBlanks));
+  } catch { /* ignore */ }
+}
+
+function getTimelineBranch() {
+  return shopData?.timelineBranch || null;
+}
+
+function syncSynopsis() {
+  const body = document.getElementById("synopsis-body");
+  const flag = document.getElementById("stuck-flag");
+  const reason = document.getElementById("stuck-reason");
+  const job = activeJob || shopData?.jobs?.find((j) => j.id === shopData?.meta?.defaultJobId);
+  if (!job) return;
+  if (body) body.textContent = job.synopsis || job.summary || "";
+  const stuck = !!job.stuck;
+  if (flag) flag.classList.toggle("hidden", !stuck);
+  if (reason) {
+    reason.classList.toggle("hidden", !stuck || !job.stuckReason);
+    reason.textContent = stuck && job.stuckReason ? job.stuckReason : "";
+  }
+}
+
+function renderTimelineRail() {
+  const rail = document.getElementById("timeline-rail");
+  if (!rail) return;
+  const branch = getTimelineBranch();
+  const steps = getCompanionSteps();
+  const active = activeCompanionStep();
+
+  // Prefer full companion as timeline so ALL bot steps stay visible
+  const nodes = steps.length
+    ? steps.map((s, i) => ({
+        id: s.timelineId || s.journeyId || s.id,
+        title: s.title,
+        idx: i,
+        branch: s.branch || (s.journeyId ? "journey" : "timeline"),
+      }))
+    : (branch?.steps || []).map((s, i) => ({ id: s.id, title: s.title, idx: i, branch: "timeline" }));
+
+  rail.innerHTML = nodes
+    .map((n) => {
+      const on = n.idx === companionStep;
+      const done = n.idx < companionStep;
+      return `<button type="button" class="tl-node ${on ? "active" : ""} ${done ? "done" : ""}" data-idx="${n.idx}" title="${escapeHtml(n.title)}">
+        <span class="tl-dot" aria-hidden="true"></span>
+        <span class="tl-label">${escapeHtml(n.title)}</span>
+      </button>`;
+    })
+    .join("");
+
+  rail.querySelectorAll(".tl-node").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const i = Number(btn.getAttribute("data-idx"));
+      if (Number.isFinite(i)) {
+        companionStep = i;
+        companionRevealed = Math.max(companionRevealed, companionStep);
+        renderCompanion(true);
+        if (jarvisOn) playJarvisBeep();
+      }
+    });
+  });
+}
+
+function syncSoftAskBlanksUI() {
+  const wrap = document.getElementById("softask-blanks");
+  const callEl = document.getElementById("blank-call");
+  const emailEl = document.getElementById("blank-email");
+  const step = activeCompanionStep();
+  const show = !!(step?.chanceBlank && (step.chanceBlank.call || step.chanceBlank.email));
+  if (wrap) wrap.hidden = !show;
+  if (!show) return;
+  if (callEl) callEl.checked = !!softAskBlanks.call;
+  if (emailEl) emailEl.checked = !!softAskBlanks.email;
+}
+
+function syncLastOfferPreview() {
+  const panel = document.getElementById("lastoffer-preview");
+  const body = document.getElementById("lastoffer-body");
+  const step = activeCompanionStep();
+  const preview = step?.lastOfferPreview || (step?.journeyId === "sj-review" ? shopData?.meta?.lastOffer : null);
+  const show = !!(preview && (preview.enabled || preview.mode === "preview-stub") && (step?.journeyId === "sj-review" || step?.lastOfferPreview));
+  if (panel) panel.classList.toggle("hidden", !show);
+  if (show && body) {
+    body.textContent = preview.body || preview.previewCopy || "Last Offer preview stub — Chance SEND later.";
+  }
+}
+
 function showToast(msg, kind) {
   if (!toast) return;
   toast.textContent = msg;
@@ -774,7 +878,8 @@ function openJob(job) {
 function renderJobDetail(job) {
   if (!job) return;
   if (detailHeader) {
-    detailHeader.innerHTML = `<strong>${escapeHtml(job.title || "")}</strong><p class="hint-sm">${escapeHtml(job.summary || "")}</p>`;
+    const stuckChip = job.stuck ? `<span class="rule-chip stuck-chip">STUCK</span>` : "";
+    detailHeader.innerHTML = `<strong>${escapeHtml(job.title || "")}</strong>${stuckChip}<p class="hint-sm">${escapeHtml(job.synopsis || job.summary || "")}</p>`;
   }
   if (confidenceMeter) {
     confidenceMeter.innerHTML = `<span class="rule-chip">confidence · ${escapeHtml(job.confidenceOverall || "—")}</span>`;
@@ -787,6 +892,7 @@ function renderJobDetail(job) {
   const gate = document.getElementById("gate-controls");
   if (gate) gate.classList.toggle("hidden", !(job.id?.includes("delco") || job.status === "close-prep"));
   activeStep = { job, step: (job.thinkPath || [])[0] || { id: "x", label: job.title } };
+  syncSynopsis();
 }
 
 function syncHotCard() {
@@ -797,7 +903,10 @@ function syncHotCard() {
   if (title) title.textContent = job.id?.includes("delco")
     ? `Delco ${job.wrapstart?.proposalId || "PR-0014"}`
     : (job.title || "").split("—")[0].trim();
-  if (sub) sub.textContent = job.id?.includes("delco") ? "Soft Ask · not sent" : plainStatus(job);
+  if (sub) {
+    if (job.id?.includes("delco")) sub.textContent = job.stuck ? "Soft Ask · STUCK · not sent" : "Soft Ask · not sent";
+    else sub.textContent = job.stuck ? `STUCK · ${plainStatus(job)}` : plainStatus(job);
+  }
 }
 
 function syncNextAction() {
@@ -892,8 +1001,8 @@ function whiteboardStepsForMode() {
       stationId: s.stationId,
     }));
   }
-  if (journey.length && companionStep >= 4) {
-    // After Delco Soft Ask chapters, show full journey on whiteboard
+  if (journey.length && (active?.branch === "journey" || companionStep >= 7)) {
+    // After Delco Soft Ask timeline, show full journey on whiteboard
     return journey.map((s) => ({
       id: s.id,
       label: s.label,
@@ -909,8 +1018,8 @@ function journeyActiveIndex() {
   const journey = getSalesJourney();
   if (!active?.journeyId || !journey.length) {
     // Map companionStep offset onto journey when in journey intro/closing
-    if (companionStep >= 5 && companionStep <= 5 + journey.length) {
-      return Math.max(0, companionStep - 5);
+    if (companionStep >= 7 && companionStep <= 7 + journey.length) {
+      return Math.max(0, companionStep - 7);
     }
     return companionStep;
   }
@@ -952,28 +1061,28 @@ function resolveMotionContext() {
     statusHint = "journey walk";
     const ji = journey.findIndex((x) => x.id === step.journeyId);
     if (ji >= 0 && journey.length) progress = Math.round(((ji + 1) / journey.length) * 100);
-  } else if (step?.id === "c5") {
+  } else if (step?.opensJourney || (step?.branch === "timeline" && step?.tone === "journey")) {
     mode = "journey";
-    title = "Sales journey walkthrough";
-    sub = "Inquiry → review · click Next · AI OFF";
+    title = "Sales journey map";
+    sub = "Inquiry → review · bot plan · Soft Ask name stays · AI OFF";
     chip = "Journey map · Soft Ask name stays";
     statusHint = "journey intro";
-  } else if (step?.tone === "gate" || step?.id === "c3") {
+  } else if (step?.tone === "gate" || step?.chanceBlank) {
     mode = "gate";
     title = step?.title || "GO or HOLD";
     sub = "Deck GO = stub only · no live send · Chance SEND gate";
     chip = "Soft Ask · Chance Gate";
     statusHint = "gate call";
-  } else if (companionStep <= 3) {
-    mode = companionStep === 0 ? "hot" : "softask";
+  } else if (step?.branch === "timeline" || companionStep < 7) {
+    mode = companionStep === 0 ? "hot" : (step?.tone === "gate" ? "gate" : "softask");
     title = step?.title || (job?.title || "Delco Soft Ask");
-    sub = step?.body?.slice(0, 120) || hot?.next || "Soft Ask path · AI OFF";
+    sub = step?.body?.slice(0, 120) || hot?.next || "Soft Ask bot plan · AI OFF";
     chip = "Soft Ask · Delco PR-0014";
-    statusHint = mode === "hot" ? "hot Delco" : "briefing Delco";
-  } else if (step?.id === "c15") {
+    statusHint = mode === "hot" ? "hot Delco" : "bot plan";
+  } else if (step?.title?.includes("Back to Delco") || step?.id === steps[steps.length - 1]?.id) {
     mode = "hot";
     title = "Back to Delco #1";
-    sub = "Soft Ask ready · GO/HOLD stubbed · AI OFF";
+    sub = "Soft Ask blanks yours · GO/HOLD stubbed · AI OFF";
     chip = "Soft Ask · Delco PR-0014";
     statusHint = "hot Delco";
   } else if (step) {
@@ -1202,12 +1311,14 @@ function syncJarvisBrief() {
   const step = activeCompanionStep();
   let line =
     JARVIS_BRIEFS[Math.max(0, Math.min(companionStep, JARVIS_BRIEFS.length - 1))] ||
-    "Soft Ask path ready when you are.";
+    "Delco Soft Ask bot plan ready — fill call?/email? when you act.";
+  // Grok narrates bot plan — never chrome ops
+  if (step?.body) {
+    line = (step.body || "").split(".")[0] + ".";
+  }
   if (step?.journeyId) {
     const j = getSalesJourney().find((x) => x.id === step.journeyId);
-    line = j?.jarvisLine || step.title || line;
-  } else if (step?.title && companionStep >= 4) {
-    line = step.title + " — click Next to keep walking.";
+    if (j?.jarvisLine) line = j.jarvisLine;
   }
   if (jarvisOn) {
     setJarvisStatus(jarvisListening ? "listening" : "briefing");
@@ -1345,6 +1456,10 @@ function renderCompanion(force) {
     syncNextAction();
     syncJarvisBrief();
     syncWhiteboardToStep();
+    syncSynopsis();
+    renderTimelineRail();
+    syncSoftAskBlanksUI();
+    syncLastOfferPreview();
     return;
   }
   const steps = getCompanionSteps();
@@ -1357,13 +1472,15 @@ function renderCompanion(force) {
 
   const s = steps[companionStep];
   const more = steps.length - companionStep - 1;
+  const branchTag = s.branch === "journey" ? "Sales journey" : "Delco Soft Ask · bot plan";
+  // One next-step page — blanks Chance fills only; Grok narrates bot plan
   feed.innerHTML = `
-    <article class="companion-bubble tone-${escapeHtml(s.tone || "")} revealed active" data-idx="${companionStep}">
-      <div class="cb-kicker">Jarvis · Grok hub</div>
+    <article class="companion-bubble tone-${escapeHtml(s.tone || "")} revealed active next-step-page" data-idx="${companionStep}">
+      <div class="cb-kicker">Jarvis · Grok hub · ${escapeHtml(branchTag)}</div>
       <div class="cb-title">${escapeHtml(s.title)}</div>
       <p class="cb-body" id="companion-type-body"></p>
     </article>
-    ${more > 0 ? `<div class="companion-bubble collapsed-hint">${more} more · Next / Back · hologram whiteboard tracks Soft Ask</div>` : ""}
+    ${more > 0 ? `<div class="companion-bubble collapsed-hint">${more} more bot steps · Next / Back · timeline shows all</div>` : `<div class="companion-bubble collapsed-hint">End of walk · Soft Ask blanks stay yours · AI OFF</div>`}
   `;
   typeReveal(document.getElementById("companion-type-body"), s.body || "");
 
@@ -1374,6 +1491,10 @@ function renderCompanion(force) {
   syncJarvisBrief();
   syncWhiteboardToStep();
   syncMotionContext(!!force);
+  syncSynopsis();
+  renderTimelineRail();
+  syncSoftAskBlanksUI();
+  syncLastOfferPreview();
   if (force && jarvisOn) setJarvisStatus(jarvisListening ? "listening" : "briefing");
 }
 
@@ -1386,7 +1507,7 @@ function companionNext() {
     renderCompanion(true);
     if (jarvisOn) playJarvisBeep();
   } else {
-    showToast("End of Soft Ask + sales journey — GO/HOLD still stubbed · AI OFF");
+    showToast("End of timeline + journey — Soft Ask blanks yours · GO/HOLD stubbed · AI OFF");
   }
 }
 
@@ -1497,6 +1618,34 @@ function wireCompanionControls() {
       e.preventDefault();
       if (!jarvisOn) setJarvisOn(true);
       toggleListening();
+    });
+  }
+
+  const blankCall = document.getElementById("blank-call");
+  const blankEmail = document.getElementById("blank-email");
+  if (blankCall && !blankCall.dataset.wired) {
+    blankCall.dataset.wired = "1";
+    blankCall.addEventListener("change", () => {
+      softAskBlanks.call = !!blankCall.checked;
+      saveSoftAskBlanks();
+      showToast(softAskBlanks.call ? "call? marked — Chance filled · no send" : "call? cleared");
+      syncSoftAskBlanksUI();
+    });
+  }
+  if (blankEmail && !blankEmail.dataset.wired) {
+    blankEmail.dataset.wired = "1";
+    blankEmail.addEventListener("change", () => {
+      softAskBlanks.email = !!blankEmail.checked;
+      saveSoftAskBlanks();
+      showToast(softAskBlanks.email ? "email? marked — Chance filled · no send" : "email? cleared");
+      syncSoftAskBlanksUI();
+    });
+  }
+  const loBtn = document.getElementById("btn-lastoffer-stub");
+  if (loBtn && !loBtn.dataset.wired) {
+    loBtn.dataset.wired = "1";
+    loBtn.addEventListener("click", () => {
+      showToast("Last Offer preview stub — review stage only · no live send");
     });
   }
 }
@@ -1632,7 +1781,7 @@ async function main() {
   ensureLiveMotionCanvas();
   showToast(
     jarvisOn
-      ? `${VERSION_TAG} — live motion ON · Delco Soft Ask + journey · AI OFF · no live send`
+      ? `${VERSION_TAG} — timeline ON · Delco Soft Ask walk · live motion · AI OFF · no live send`
       : `${VERSION_TAG} — tap JARVIS to wake hologram · AI OFF · no live send`
   );
 }
