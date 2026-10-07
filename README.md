@@ -1,16 +1,17 @@
-# USA Wrap Co Control Deck v0.9.3-clean
+# USA Wrap Co Control Deck v0.9.3-layout
 
 Stupid-simple **command station** for Chance — sits beside Wrapstart while you walk the **Delco PR-0014** Soft Ask.
 
-**Layout hierarchy (clean):**
-1. **One next-step** + Soft Ask blanks + Next/Back + GO/HOLD — center command card
-2. **Timeline map** — left rail, all bot steps visible
-3. **Hologram** — ambient secondary (wrap-guy + live motion)
-4. **Chrome** — Board / meters / mute / listen / MORE behind **⋯**
+**Layout hierarchy:**
+1. **Next step** owns the center — narration, Soft Ask blanks, Next/Back, GO/HOLD stub
+2. **Timeline** is a map strip — every bot step, not the work surface
+3. **Hologram** is a quieter side presence
+4. **Chrome** — Board, meters, mute, listen, board view, MORE — behind **Stage**
 
 **Jarvis** = calm ops companion with Cortana-*feel* (helpful hologram), **not** Cortana look.
 - **Grok Bot** = voice — narrates the **bot plan** (not chrome ops)
-- **Hologram wrap-guy** = body (cyan/white scanline figure)
+- **Hologram wrap-guy** = body (cyan/white scanline figure, pointing pose from USA Wrap Co ad vibe)
+- **Timeline map** = every bot step, as a strip. Next/Back walks one step.
 - **Soft Ask blanks** = `call?` / `email?` — Chance fills only (local, never sends)
 - **Last Offer** = review-stage preview stub only
 
@@ -20,9 +21,9 @@ Stupid-simple **command station** for Chance — sits beside Wrapstart while you
 
 1. Open the deck (live URL below, or local).
 2. Tap **JARVIS** in the top bar (OFF → ON). Default is **ON**.
-3. Center **command card** shows the one next step. Timeline map on the left.
+3. Center **next step** shows the one bot step. Timeline map is the strip underneath.
 4. Walk with **Next / Back**. Fill Soft Ask blanks when you act.
-5. Tap **⋯** for Board, meters, mute, listen, whiteboard cycle, MORE.
+5. Open **Stage** on the hologram for Board, meters, mute, listen, whiteboard cycle, MORE.
 6. Optional: **LISTEN** = UI listening state (Web Speech when allowed).
 
 ## Open it (Chance)
@@ -32,7 +33,6 @@ Live: **https://usawrapco-spec.github.io/wrap-shop-control-deck/**
 Or local:
 
 ```bash
-cd /workspace/wrap-shop-control-deck-gh
 python3 -m http.server 8878
 ```
 
