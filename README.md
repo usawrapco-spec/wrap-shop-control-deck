@@ -1,16 +1,14 @@
-# USA Wrap Co Control Deck v0.5-game
+# USA Wrap Co Control Deck v0.6-brain
 
-Stupid-simple **command station** for Chance — sits beside Wrapstart while you walk the **Delco PR-0014** close. Game HUD framing makes jobs feel playable; every beat maps to a real ops action.
+Stupid-simple **command station** for Chance — sits beside Wrapstart while you walk the **Delco PR-0014** Soft Ask.
 
 First screen = three things only:
-1. **What’s hot** (Delco boss)
+1. **What’s hot** (Delco Soft Ask #1)
 2. **What to do next** (one plain-English line)
 3. **GO / HOLD** (stubs — no live send)
 
-Warm 3D shop map + quest markers, minimap, mission board under **Quests**. Steps / lanes / rules under **Show steps** / **More**.  
-**AI stays OFF. No live customer sends.**
-
-See **[GAME_DESIGN.md](./GAME_DESIGN.md)** for how the game layer maps to shop ops.
+Quiet 3D shop map. **Brain thoughts** = companion think path in plain English. Lanes / rules / future under **More**. Board snapshot under **Board**.  
+**AI stays OFF. No live customer sends. Outbound LinkedIn paused — not featured.**
 
 ## Open it (Chance)
 
@@ -27,17 +25,17 @@ Open **http://localhost:8878/** beside Wrapstart.
 
 - Big red **AI OFF** badge = Engage OFF · Answer Off (hardcoded)
 - **No customer send** — GO / HOLD toast *“Queued for Chance — no live send”*
-- **Quests** = Delco boss + side jobs with $ and next action
-- **XP / streak** (localStorage) for scrub, Soft Ask steps, GO/HOLD stubs — not fake revenue
-- Sound muted by default (🔇 toggle)
+- **Brain thoughts** = Delco Soft Ask think path (expandable)
+- **Board** = top jobs from internal snapshot (Delco first)
+- No XP / achievements / arcade sounds / rarity toys
 
 ## What’s preloaded
 
 | Item | Value |
 |---|---|
 | Proposal | **PR-0014** |
-| Hot job | Delco close prep (Legendary / boss) |
-| Status | not sent yet |
+| Hot job | Delco Soft Ask (#1 on board) |
+| Status | not sent yet · HOLD auto-send |
 | Default | Delco opens on load |
 
 ## Safety (non-negotiable)
@@ -49,11 +47,10 @@ Open **http://localhost:8878/** beside Wrapstart.
 
 ## Files
 
-- `index.html` — simple dock + game HUD shell
-- `app.js` — Three.js shop + companion + quest/XP layer + stubs
-- `style.css` — neon shop polish
-- `data/shop-brain.json` — lanes, stations, Delco job, companion script
-- `GAME_DESIGN.md` — Chance-facing game ↔ ops map
+- `index.html` — simple dock + brain shell
+- `app.js` — Three.js shop + brain companion + GO/HOLD stubs
+- `style.css` — glass panels, quiet chrome
+- `data/shop-brain.json` — lanes, stations, Delco job, boardSnapshot, companion script
 - `README.md` — this file
 
-Evolved from v0.4-simple · cues from wrap-shop-brain-sim / control-future.
+Evolved from v0.5-game (game layer stripped) · v0.4-simple first-screen shape kept.

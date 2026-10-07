@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Control Deck v0.5-game — USA Wrap Co</title>
+  <title>Control Deck v0.6-brain — USA Wrap Co</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -16,7 +16,7 @@
         <span class="logo-orb" aria-hidden="true"></span>
         <div>
           <h1>Control Deck</h1>
-          <p class="tagline">v0.5-game · AI OFF · no live send</p>
+          <p class="tagline">v0.6-brain · AI OFF · no live send</p>
         </div>
       </div>
       <div class="mission-chip" id="mission-chip" title="Shop mission">Loading…</div>
@@ -25,19 +25,13 @@
           <span class="meter-k">Need you</span>
           <span class="meter-v" id="meter-need-you">—</span>
         </div>
-        <div class="meter meter-boss" title="Delco stall clock">
+        <div class="meter meter-focus" title="Delco stall clock">
           <span class="meter-k">Delco</span>
           <span class="meter-v" id="meter-delco">—</span>
         </div>
-        <div class="meter meter-xp" title="Ops XP — earned on real scrub / Soft Ask / GO / HOLD">
-          <span class="meter-k">Lv <span id="meter-level">1</span></span>
-          <div class="xp-bar"><div class="xp-fill" id="xp-fill"></div></div>
-          <span class="meter-v meter-xp-n" id="meter-xp">0</span>
-        </div>
       </div>
       <div class="top-actions">
-        <button type="button" id="btn-sound" class="btn ghost sound-btn" title="UI sounds muted — click to unmute" aria-pressed="false">🔇</button>
-        <button type="button" id="btn-quests" class="btn ghost" title="Mission board">Quests</button>
+        <button type="button" id="btn-board" class="btn ghost" title="On board">Board</button>
         <div id="ai-off-badge" class="ai-off-badge" title="Engage OFF · Answer calls Off · hardcoded — never wire live AI ON">
           AI OFF
           <span class="ai-off-sub">Engage OFF · Answer Off</span>
@@ -48,30 +42,21 @@
 
     <main id="stage-wrap">
       <canvas id="c"></canvas>
-      <div id="hud-hint">Drag to orbit · Delco boss · quest markers · AI OFF</div>
-      <div id="objective-arrow" class="objective-arrow" aria-hidden="true" title="Objective: Delco">
-        <span class="obj-label">OBJ</span>
-        <span class="obj-chev">▲</span>
-        <span class="obj-name" id="obj-name">Delco</span>
-      </div>
-      <canvas id="minimap" width="160" height="160" aria-label="Shop minimap"></canvas>
-      <div id="fx-layer" aria-hidden="true"></div>
+      <div id="hud-hint">Drag to orbit · quiet shop map · AI OFF</div>
     </main>
 
     <section id="simple-dock" aria-label="What to do now">
-      <button type="button" id="hot-card" class="hot-card" title="Focus Delco">
+      <button type="button" id="hot-card" class="hot-card glass" title="Focus Delco">
         <span class="hot-kicker">What’s hot</span>
         <span class="hot-title" id="hot-title">Delco PR-0014</span>
-        <span class="hot-sub" id="hot-sub">Close prep · not sent</span>
-        <span class="hot-tier" id="hot-tier">LEGENDARY</span>
+        <span class="hot-sub" id="hot-sub">Soft Ask · not sent</span>
       </button>
 
-      <div class="next-card">
+      <div class="next-card glass">
         <span class="next-kicker">What to do next</span>
         <p class="next-action" id="next-action">Loading…</p>
         <div class="next-meta">
-          <span class="streak-chip" id="streak-chip" title="Days with at least one real ops action">🔥 streak 0</span>
-          <button type="button" id="btn-show-steps" class="link-btn" aria-expanded="false">Show steps</button>
+          <button type="button" id="btn-show-steps" class="link-btn" aria-expanded="false">Brain thoughts</button>
         </div>
       </div>
 
@@ -81,24 +66,26 @@
       </div>
     </section>
 
-    <aside id="quest-board" class="hidden" aria-label="Mission board" aria-live="polite">
-      <div class="quest-head">
+    <aside id="board-panel" class="hidden glass-panel" aria-label="On board" aria-live="polite">
+      <div class="panel-head">
         <div>
-          <h2>Mission board</h2>
-          <p class="hint-sm">Boss = Delco close. Side quests = other jobs that need you. Tap a card to focus.</p>
+          <h2>On board</h2>
+          <p class="hint-sm">Live snapshot · Delco first. Tap a row to focus. Outbound LinkedIn paused.</p>
         </div>
-        <button type="button" id="btn-close-quests" class="btn-icon" title="Close">✕</button>
+        <button type="button" id="btn-close-board" class="btn-icon" title="Close">✕</button>
       </div>
-      <div id="quest-boss" class="quest-boss"></div>
-      <h3 class="quest-side-label">Side quests</h3>
-      <div id="quest-list" class="quest-list"></div>
-      <div id="achieve-list" class="achieve-list"></div>
+      <div id="board-hot" class="board-hot"></div>
+      <h3 class="board-side-label">Also needs you</h3>
+      <div id="board-list" class="board-list"></div>
     </aside>
 
-    <aside id="steps-panel" class="hidden" aria-label="Steps" aria-live="polite">
+    <aside id="steps-panel" class="hidden glass-panel" aria-label="Brain thoughts" aria-live="polite">
       <div class="steps-head">
-        <h2>Steps · companion</h2>
-        <button type="button" id="btn-hide-steps" class="btn-icon" title="Hide steps">✕</button>
+        <div>
+          <h2>Brain thoughts</h2>
+          <p class="hint-sm">One next action · expand for the think path</p>
+        </div>
+        <button type="button" id="btn-hide-steps" class="btn-icon" title="Hide">✕</button>
       </div>
       <div id="companion-feed" class="companion-feed"></div>
       <div class="steps-nav">
@@ -116,10 +103,10 @@
         <h3>Think path</h3>
         <ol id="think-path"></ol>
       </div>
-      <button type="button" id="btn-toggle-detail" class="link-btn">Show job details</button>
+      <button type="button" id="btn-toggle-detail" class="link-btn">Show think path</button>
     </aside>
 
-    <aside id="more-drawer" class="hidden" aria-label="More" aria-live="polite">
+    <aside id="more-drawer" class="hidden glass-panel" aria-label="More" aria-live="polite">
       <div class="more-head">
         <h2>More</h2>
         <button type="button" id="btn-close-more" class="btn-icon" title="Close">✕</button>
@@ -154,7 +141,6 @@
     </aside>
 
     <div id="tooltip" class="hidden"></div>
-    <div id="achieve-toast" class="achieve-toast hidden" role="status"></div>
 
     <div id="feedback-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="fb-title">
       <div class="modal-card">
