@@ -4,7 +4,7 @@ const FEEDBACK_KEY = "wrapShopControlDeckFeedback_v03";
 const STUB_TOAST_GO = "Queued for Chance — no live send";
 const STUB_TOAST_HOLD = "Parked — HOLD queued for Chance";
 const DATA_URL = "./data/shop-brain.json";
-const VERSION_TAG = "v0.9.2-timeline";
+const VERSION_TAG = "v0.9.3-clean";
 const JARVIS_KEY = "wrapShopControlDeckJarvis_v09";
 const JARVIS_MUTE_KEY = "wrapShopControlDeckJarvisMute_v09";
 const BLANKS_KEY = "wrapShopControlDeckSoftAskBlanks_v092";
@@ -688,6 +688,12 @@ function renderTimelineRail() {
       }
     });
   });
+
+  const mapSub = document.getElementById("map-sub");
+  if (mapSub) {
+    const active = steps[companionStep];
+    mapSub.textContent = active?.branch === "journey" ? "Sales journey" : "Delco Soft Ask";
+  }
 }
 
 function syncSoftAskBlanksUI() {
@@ -748,7 +754,7 @@ function plainStatus(job) {
 
 function nextActionPlain(stepIdx) {
   const steps = getCompanionSteps();
-  if (steps[stepIdx]) return steps[stepIdx].title + " — " + (steps[stepIdx].body || "").split(".")[0] + ".";
+  if (steps[stepIdx]) return steps[stepIdx].title;
   return "Soft Ask path ready when you are.";
 }
 
@@ -1346,7 +1352,7 @@ function applyJarvisMode() {
   }
   const showBtn = document.getElementById("btn-show-steps");
   const stepsOpen = !document.getElementById("steps-panel")?.classList.contains("hidden");
-  if (showBtn) showBtn.textContent = stepsOpen ? "Hide Jarvis" : "Jarvis thoughts";
+  if (showBtn) showBtn.textContent = stepsOpen ? "Hide think path" : "Think path";
   syncJarvisBrief();
   syncWhiteboardToStep();
   if (jarvisOn) setJarvisStatus(jarvisListening ? "listening" : "briefing");
@@ -1473,14 +1479,13 @@ function renderCompanion(force) {
   const s = steps[companionStep];
   const more = steps.length - companionStep - 1;
   const branchTag = s.branch === "journey" ? "Sales journey" : "Delco Soft Ask · bot plan";
-  // One next-step page — blanks Chance fills only; Grok narrates bot plan
+  // One next-step page — title in next-action; body here; blanks Chance fills only
   feed.innerHTML = `
     <article class="companion-bubble tone-${escapeHtml(s.tone || "")} revealed active next-step-page" data-idx="${companionStep}">
-      <div class="cb-kicker">Jarvis · Grok hub · ${escapeHtml(branchTag)}</div>
-      <div class="cb-title">${escapeHtml(s.title)}</div>
+      <div class="cb-kicker">${escapeHtml(branchTag)}</div>
       <p class="cb-body" id="companion-type-body"></p>
     </article>
-    ${more > 0 ? `<div class="companion-bubble collapsed-hint">${more} more bot steps · Next / Back · timeline shows all</div>` : `<div class="companion-bubble collapsed-hint">End of walk · Soft Ask blanks stay yours · AI OFF</div>`}
+    <div class="collapsed-hint">${more > 0 ? more + " more on the map · Next / Back" : "End of walk · Soft Ask blanks stay yours · AI OFF"}</div>
   `;
   typeReveal(document.getElementById("companion-type-body"), s.body || "");
 
@@ -1531,9 +1536,25 @@ function setStepsOpen(open) {
   panel.classList.toggle("hidden", !open);
   if (btn) {
     btn.setAttribute("aria-expanded", open ? "true" : "false");
-    btn.textContent = open ? "Hide Jarvis" : "Jarvis thoughts";
+    btn.textContent = open ? "Hide think path" : "Think path";
   }
-  if (open) renderCompanion(true);
+  if (open) {
+    setDetailExtrasOpen(true);
+    renderCompanion(true);
+  }
+}
+
+function setChromeOpen(open) {
+  const strip = document.getElementById("chrome-strip");
+  const btn = document.getElementById("btn-chrome");
+  if (strip) {
+    strip.classList.toggle("collapsed", !open);
+    strip.setAttribute("aria-hidden", open ? "false" : "true");
+  }
+  if (btn) {
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    btn.textContent = open ? "✕" : "⋯";
+  }
 }
 
 function setMoreOpen(open) {
@@ -1659,7 +1680,16 @@ function wireSimpleUi() {
   const toggleDetail = document.getElementById("btn-toggle-detail");
   const boardBtn = document.getElementById("btn-board");
   const closeBoard = document.getElementById("btn-close-board");
+  const chromeBtn = document.getElementById("btn-chrome");
 
+  if (chromeBtn && !chromeBtn.dataset.wired) {
+    chromeBtn.dataset.wired = "1";
+    chromeBtn.addEventListener("click", () => {
+      const strip = document.getElementById("chrome-strip");
+      const open = strip?.classList.contains("collapsed");
+      setChromeOpen(!!open);
+    });
+  }
   if (showSteps) {
     showSteps.addEventListener("click", () => {
       const open = document.getElementById("steps-panel")?.classList.contains("hidden");
@@ -1744,7 +1774,8 @@ async function main() {
   wireCompanionControls();
   wireSimpleUi();
   applyJarvisMode();
-  setStepsOpen(true);
+  setStepsOpen(false);
+  setChromeOpen(false);
   setDetailExtrasOpen(false);
   setBoardOpen(false);
   if (detailPanel) detailPanel.classList.add("hidden");
@@ -1781,7 +1812,7 @@ async function main() {
   ensureLiveMotionCanvas();
   showToast(
     jarvisOn
-      ? `${VERSION_TAG} — timeline ON · Delco Soft Ask walk · live motion · AI OFF · no live send`
+      ? `${VERSION_TAG} — next-step center · timeline map · AI OFF · no live send`
       : `${VERSION_TAG} — tap JARVIS to wake hologram · AI OFF · no live send`
   );
 }

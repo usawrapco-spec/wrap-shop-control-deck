@@ -1,21 +1,19 @@
-# Sales journey walkthrough (Jarvis) — timeline branch
+# Sales journey walkthrough (Jarvis) — clean layout
 
-Chance opens on **Delco Soft Ask**. The **timeline rail** shows every bot step. One next-step page + **Next / Back**. Soft Ask blanks (`call?` / `email?`) are Chance-filled only. Grok narrates the **bot plan** — not chrome ops.
+Chance opens on **Delco Soft Ask**. The **timeline map** (left) shows every bot step. **One next-step** command card center + **Next / Back**. Soft Ask blanks (`call?` / `email?`) are Chance-filled only. Grok narrates the **bot plan** — not chrome ops. Hologram stays ambient. Secondary chrome (Board / meters / tools) hides behind **⋯**.
 
-**Version:** `0.9.2-timeline` · **AI Engage:** OFF · **Deck GO/HOLD:** stub only (no live send)
+**Version:** `0.9.3-clean` · **AI Engage:** OFF · **Deck GO/HOLD:** stub only (no live send)
 
 ## How to walk it
 
 1. Open the Control Deck (Pages or local).
 2. Leave **JARVIS** ON — hologram + live motion rings wake up.
-3. **Jarvis thoughts** opens with synopsis + STUCK flag (Delco) + full timeline rail.
-4. Steps on the **timeline branch** = Delco Soft Ask bot plan (packet → Chance-only → Soft Ask draft → margin → GO/HOLD → accept path → journey map).
+3. **Command card** (center) shows the one next step + blanks when relevant.
+4. **Timeline map** (left) = Delco Soft Ask bot plan, then journey stages.
 5. Soft Ask steps show blanks: **call?** / **email?** — check when you act (local only).
 6. Next pages = nine journey stages (inquiry → review). Whiteboard shows **SALES JOURNEY**.
 7. At **review**, Last Offer appears as a **preview stub** only (no live send).
 8. Final step returns to Delco #1.
-
-Dock **→ / ←** advances the same script. Context HUD (mode · title · sub · progress) always updates.
 
 Nothing in this walkthrough sends email, SMS, or Wrapstart messages.
 
@@ -28,11 +26,12 @@ Nothing in this walkthrough sends email, SMS, or Wrapstart messages.
 | CHANCE GATE | GO / HOLD chapter | Red/amber gate glow |
 | SALES JOURNEY | Journey intro + 9 stages | Teal rings + journey progress |
 
-## Recommendations baked in (Chance: “if you have any recommendation do it”)
+## Recommendations baked in
 
-- **Synopsis + STUCK flag** per job (Delco stuck ~48h stall)
+- **Synopsis + STUCK flag** on the timeline map (Delco stuck ~48h stall)
 - **Soft Ask blanks** `call?` / `email?` — Chance fills only
 - **Last Offer** at review stage only as preview stub
+- **Clean hierarchy** — next-step center, map left, hologram secondary, chrome collapsed
 
 ## Nine stages (`salesJourney` in `data/shop-brain.json`)
 
@@ -59,6 +58,6 @@ Nothing in this walkthrough sends email, SMS, or Wrapstart messages.
 ## Files
 
 - `data/shop-brain.json` — `timelineBranch`, `salesJourney`, stations, `companionScript`, synopsis/stuck, version bump
-- `app.js` — timeline rail + blanks + Last Offer stub + live motion
-- `index.html` / `style.css` — timeline UI + Soft Ask blanks
+- `app.js` — timeline map + blanks + Last Offer stub + live motion + chrome toggle
+- `index.html` / `style.css` — clean hierarchy
 - `JOURNEY.md` — this note

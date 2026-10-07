@@ -1,27 +1,27 @@
 {
   "meta": {
     "title": "USA Wrap Co Control Deck",
-    "subtitle": "Vault HUD \u00b7 timeline journey \u00b7 Soft Ask blanks \u00b7 hologram \u00b7 live motion \u00b7 AI OFF \u00b7 no live send",
+    "subtitle": "Vault HUD · next-step center · timeline map · hologram secondary · AI OFF · no live send",
     "date": "2026-10-07",
     "owner": "Chance Wallace",
-    "mission": "Delco #1 Soft Ask (call? + email? blanks) \u00b7 HOLD auto-send \u00b7 11 waiting Chance GO \u00b7 outbound paused \u00b7 AI OFF",
+    "mission": "Delco #1 Soft Ask (call? + email? blanks) · HOLD auto-send · 11 waiting Chance GO · outbound paused · AI OFF",
     "aiEngage": "off",
     "answerCalls": "off",
-    "controlSpec": "v0.9.2-timeline",
-    "version": "0.9.2-timeline",
+    "controlSpec": "v0.9.3-clean",
+    "version": "0.9.3-clean",
     "defaultJobId": "job-delco-pr0014",
     "delcoStallHours": 48,
     "jarvis": {
       "name": "Jarvis",
       "voice": "Grok Bot",
       "body": "Three.js hologram wrap-guy + whiteboard Soft Ask / jobs / email draft",
-      "hubLabel": "Jarvis \u00b7 Grok hub",
+      "hubLabel": "Jarvis · Grok hub",
       "defaultOn": true,
       "beepMutedDefault": true,
-      "look": "cyan/white hologram scanlines \u00b7 pointing wrap-guy \u00b7 not Cortana costume"
+      "look": "cyan/white hologram scanlines · pointing wrap-guy · not Cortana costume"
     },
     "softAskBlanks": {
-      "label": "Soft Ask blanks \u2014 Chance fills only",
+      "label": "Soft Ask blanks — Chance fills only",
       "fields": [
         {
           "id": "call",
@@ -43,8 +43,8 @@
       "stageId": "sj-review",
       "mode": "preview-stub",
       "enabled": false,
-      "previewCopy": "Last Offer sits at review only \u2014 warm final scope/price nudge if still closing a gap. Preview stub tonight. Real SEND = Chance in Wrapstart. Never mass blast. Soft Ask name stays.",
-      "note": "Preview only \u00b7 Chance SEND later \u00b7 never auto"
+      "previewCopy": "Last Offer sits at review only — warm final scope/price nudge if still closing a gap. Preview stub tonight. Real SEND = Chance in Wrapstart. Never mass blast. Soft Ask name stays.",
+      "note": "Preview only · Chance SEND later · never auto"
     }
   },
   "lanes": [
@@ -60,11 +60,11 @@
     },
     {
       "id": "lane-b",
-      "name": "Jarvis \u00b7 Grok hub",
+      "name": "Jarvis · Grok hub",
       "color": "#ff9f43",
       "summary": "Back-office brain: scrub proposals, Margin Guard, draft Soft Asks, route jobs, keep rules. Never sends without Chance.",
       "roles": [
-        "Jarvis \u00b7 Grok Bot",
+        "Jarvis · Grok Bot",
         "Margin Guard",
         "Proposal Scrub"
       ]
@@ -73,7 +73,7 @@
       "id": "lane-c",
       "name": "Human Crew",
       "color": "#7bed9f",
-      "summary": "Josh Soft Ask outbound. Corey outbound-only. Chance is the send gate \u2014 nothing customer-facing leaves without him.",
+      "summary": "Josh Soft Ask outbound. Corey outbound-only. Chance is the send gate — nothing customer-facing leaves without him.",
       "roles": [
         "Josh (Soft Ask outbound)",
         "Corey (outbound-only)",
@@ -85,7 +85,7 @@
     {
       "id": "front-desk",
       "name": "Front Desk",
-      "emoji": "\ud83d\udece\ufe0f",
+      "emoji": "🛎️",
       "color": "#5ec8ff",
       "position": [
         -18,
@@ -101,7 +101,7 @@
     {
       "id": "lead-lake",
       "name": "Lead Lake",
-      "emoji": "\ud83c\udf0a",
+      "emoji": "🌊",
       "color": "#74b9ff",
       "position": [
         -12,
@@ -117,14 +117,14 @@
     {
       "id": "quote-forge",
       "name": "Quote Forge",
-      "emoji": "\u2692\ufe0f",
+      "emoji": "⚒️",
       "color": "#fdcb6e",
       "position": [
         -4,
         0,
         -8
       ],
-      "blurb": "Get them a quote. Ballpark \u2192 proposal. Soft Ask tone. Full scope = better deal.",
+      "blurb": "Get them a quote. Ballpark → proposal. Soft Ask tone. Full scope = better deal.",
       "journeyStageIds": [
         "sj-quote",
         "sj-questions"
@@ -133,7 +133,7 @@
     {
       "id": "margin-vault",
       "name": "Margin Vault",
-      "emoji": "\ud83c\udfe6",
+      "emoji": "🏦",
       "color": "#a29bfe",
       "position": [
         4,
@@ -148,7 +148,7 @@
     {
       "id": "chance-gate",
       "name": "Chance Gate",
-      "emoji": "\ud83d\udeaa",
+      "emoji": "🚪",
       "color": "#ffeaa7",
       "position": [
         10,
@@ -163,7 +163,7 @@
     {
       "id": "deposit-safe",
       "name": "Deposit Safe",
-      "emoji": "\ud83d\udd10",
+      "emoji": "🔐",
       "color": "#55efc4",
       "position": [
         14,
@@ -179,7 +179,7 @@
     {
       "id": "design-studio",
       "name": "Design Studio",
-      "emoji": "\ud83c\udfa8",
+      "emoji": "🎨",
       "color": "#fd79a8",
       "position": [
         8,
@@ -194,7 +194,7 @@
     {
       "id": "print-bay",
       "name": "Print Bay",
-      "emoji": "\ud83d\udda8\ufe0f",
+      "emoji": "🖨️",
       "color": "#e17055",
       "position": [
         0,
@@ -210,14 +210,14 @@
     {
       "id": "install-bay",
       "name": "Install Bay",
-      "emoji": "\ud83d\udd27",
+      "emoji": "🔧",
       "color": "#00b894",
       "position": [
         -8,
         0,
         10
       ],
-      "blurb": "Wait on install \u00b7 install day. Quality over speed. Customer happy = referrals.",
+      "blurb": "Wait on install · install day. Quality over speed. Customer happy = referrals.",
       "journeyStageIds": [
         "sj-schedule",
         "sj-install-wait",
@@ -227,7 +227,7 @@
     {
       "id": "dekwave-dock",
       "name": "DekWave Dock",
-      "emoji": "\ud83d\udea4",
+      "emoji": "🚤",
       "color": "#0984e3",
       "position": [
         -16,
@@ -239,7 +239,7 @@
     {
       "id": "schedule-board",
       "name": "Schedule Board",
-      "emoji": "\ud83d\udcc5",
+      "emoji": "📅",
       "color": "#81ecec",
       "position": [
         6,
@@ -255,7 +255,7 @@
     {
       "id": "final-pay",
       "name": "Final Pay",
-      "emoji": "\ud83d\udcb5",
+      "emoji": "💵",
       "color": "#55efc4",
       "position": [
         12,
@@ -270,14 +270,14 @@
     {
       "id": "review-radar",
       "name": "Review Radar",
-      "emoji": "\u2b50",
+      "emoji": "⭐",
       "color": "#ffeaa7",
       "position": [
         -4,
         0,
         16
       ],
-      "blurb": "Ask for the review while the win is fresh. Soft Ask \u00b7 Chance-gated \u00b7 no blast.",
+      "blurb": "Ask for the review while the win is fresh. Soft Ask · Chance-gated · no blast.",
       "journeyStageIds": [
         "sj-review"
       ]
@@ -285,14 +285,14 @@
     {
       "id": "future-deck",
       "name": "Future Deck",
-      "emoji": "\ud83d\ude80",
+      "emoji": "🚀",
       "color": "#fd79a8",
       "position": [
         16,
         0,
         -2
       ],
-      "blurb": "Where the cockpit is headed \u2014 tap for phase cards. AI stays OFF until Chance GO."
+      "blurb": "Where the cockpit is headed — tap for phase cards. AI stays OFF until Chance GO."
     }
   ],
   "hardRules": [
@@ -310,7 +310,7 @@
     },
     {
       "id": "rule-margin",
-      "title": "C+A all-in tax 8.2% \u00b7 margin pretax",
+      "title": "C+A all-in tax 8.2% · margin pretax",
       "detail": "Quotes bake California + all-in tax at 8.2%. Margin math is pretax. Thin margin = HOLD.",
       "confidence": "high"
     },
@@ -335,12 +335,12 @@
     {
       "id": "rule-deposit",
       "title": "Deposit before design",
-      "detail": "Accept first \u2192 50% deposit invoice \u2192 THEN design. Quotes carry no deposit line.",
+      "detail": "Accept first → 50% deposit invoice → THEN design. Quotes carry no deposit line.",
       "confidence": "high"
     },
     {
       "id": "rule-phones",
-      "title": "Phones 358-8870 / 8941 / 5628 \u2014 no forward",
+      "title": "Phones 358-8870 / 8941 / 5628 — no forward",
       "detail": "Shop lines stay on the desk. Do not forward to cell or AI voice.",
       "confidence": "high"
     }
@@ -360,7 +360,7 @@
     {
       "id": "c1",
       "title": "Packet confirmed",
-      "body": "PR-0014 scrubbed: BrightDrop 600\u00d72 + 400\u00d71 \u00b7 Fixed $29,807 / Folding $44,232 pretax \u00b7 8.2% tax \u00b7 valid to 2026-11-05. sent_at=null.",
+      "body": "PR-0014 scrubbed: BrightDrop 600×2 + 400×1 · Fixed $29,807 / Folding $44,232 pretax · 8.2% tax · valid to 2026-11-05. sent_at=null.",
       "tone": "ready",
       "branch": "timeline",
       "timelineId": "tl-1",
@@ -371,7 +371,7 @@
     {
       "id": "c2",
       "title": "Chance-only gate",
-      "body": "Delco/MSA never auto-route. Josh Soft Ask OFF. AI Engage OFF. Only you talk to Puneet. Deck narrates \u2014 never sends.",
+      "body": "Delco/MSA never auto-route. Josh Soft Ask OFF. AI Engage OFF. Only you talk to Puneet. Deck narrates — never sends.",
       "tone": "wait",
       "branch": "timeline",
       "timelineId": "tl-2",
@@ -382,7 +382,7 @@
     {
       "id": "c3",
       "title": "Soft Ask draft ready",
-      "body": "Warm Soft Ask: call + proposal link. Lead Fixed (recommended). Folding = premium clear-floor. MSA lever stays with you \u2014 don't dump every lever on first touch.",
+      "body": "Warm Soft Ask: call + proposal link. Lead Fixed (recommended). Folding = premium clear-floor. MSA lever stays with you — don't dump every lever on first touch.",
       "tone": "quote",
       "branch": "timeline",
       "timelineId": "tl-3",
@@ -396,7 +396,7 @@
     {
       "id": "c4",
       "title": "Margin healthy",
-      "body": "Fixed parts $25,230 + install 19.9h\u00d7$230=$4,577 \u2192 $29,807 pretax. Folding $37,769 + 28.1h\u00d7$230=$6,463 \u2192 $44,232. Margin pretax healthy. Wrap mention-only.",
+      "body": "Fixed parts $25,230 + install 19.9h×$230=$4,577 → $29,807 pretax. Folding $37,769 + 28.1h×$230=$6,463 → $44,232. Margin pretax healthy. Wrap mention-only.",
       "tone": "ready",
       "branch": "timeline",
       "timelineId": "tl-4",
@@ -407,7 +407,7 @@
     {
       "id": "c5",
       "title": "Your GO / HOLD",
-      "body": "Deck GO queues a stub for you \u2014 no Wrapstart, Gmail, or SMS from here. Real Soft Ask send stays in Wrapstart when you choose. HOLD parks it. Stall ~48h; competitors in play.",
+      "body": "Deck GO queues a stub for you — no Wrapstart, Gmail, or SMS from here. Real Soft Ask send stays in Wrapstart when you choose. HOLD parks it. Stall ~48h; competitors in play.",
       "tone": "gate",
       "branch": "timeline",
       "timelineId": "tl-5",
@@ -421,7 +421,7 @@
     {
       "id": "c6",
       "title": "If they accept",
-      "body": "After accept \u2192 invoice 50% of all-in (Fixed \u2248$16,126 / Folding \u2248$23,930). THEN Design. No free art on a handshake. Quotes carry no deposit line.",
+      "body": "After accept → invoice 50% of all-in (Fixed ≈$16,126 / Folding ≈$23,930). THEN Design. No free art on a handshake. Quotes carry no deposit line.",
       "tone": "deposit",
       "branch": "timeline",
       "timelineId": "tl-6",
@@ -432,7 +432,7 @@
     {
       "id": "c7",
       "title": "Sales journey map",
-      "body": "Every job follows inquiry \u2192 capture \u2192 quote \u2192 Soft Ask questions \u2192 proof \u2192 schedule \u2192 install \u2192 final pay \u2192 review. Delco stays #1 while we walk the map.",
+      "body": "Every job follows inquiry → capture → quote → Soft Ask questions → proof → schedule → install → final pay → review. Delco stays #1 while we walk the map.",
       "tone": "journey",
       "branch": "timeline",
       "timelineId": "tl-7",
@@ -442,8 +442,8 @@
     },
     {
       "id": "c8",
-      "title": "Journey 1/9 \u2014 Inquiry / lead",
-      "body": "Lead just splashed in. We park it \u2014 nobody auto-pings the customer. AI stays OFF until you say GO. What we do: Form hits Wrapstart Front Desk. Receptionist captures; Lead Agent stays OFF. Sort wrap / upfit / DekWave into Lead Lake. Customer sees: Thank-you / we got it page only. No Soft Ask yet. No AI chat. Next: Open the lead card \u00b7 confirm vehicle + scope hints \u00b7 move to Capture Note: Soft Ask name stays for later outbound \u2014 not this step.",
+      "title": "Journey 1/9 — Inquiry / lead",
+      "body": "Lead just splashed in. We park it — nobody auto-pings the customer. AI stays OFF until you say GO. What we do: Form hits Wrapstart Front Desk. Receptionist captures; Lead Agent stays OFF. Sort wrap / upfit / DekWave into Lead Lake. Customer sees: Thank-you / we got it page only. No Soft Ask yet. No AI chat. Next: Open the lead card · confirm vehicle + scope hints · move to Capture Note: Soft Ask name stays for later outbound — not this step.",
       "tone": "ready",
       "journeyId": "sj-inquiry",
       "stationId": "lead-lake",
@@ -454,8 +454,8 @@
     },
     {
       "id": "c9",
-      "title": "Journey 2/9 \u2014 Capture information",
-      "body": "Fill the blanks before we price anything. Photos, fleet size, zip, timeline \u2014 junk in means junk quotes. What we do: Human (or practice wallco92) completes intake: vehicle, area, fleet count, zip for tax, timeline, contact. Scrub for Delco/MSA Chance-only tags. Customer sees: Maybe a short clarifying call or form follow-up \u2014 only if Chance green-lights. Deck never sends. Next: Mark intake complete \u00b7 hand packet to Quote Forge",
+      "title": "Journey 2/9 — Capture information",
+      "body": "Fill the blanks before we price anything. Photos, fleet size, zip, timeline — junk in means junk quotes. What we do: Human (or practice wallco92) completes intake: vehicle, area, fleet count, zip for tax, timeline, contact. Scrub for Delco/MSA Chance-only tags. Customer sees: Maybe a short clarifying call or form follow-up — only if Chance green-lights. Deck never sends. Next: Mark intake complete · hand packet to Quote Forge",
       "tone": "wait",
       "journeyId": "sj-capture",
       "stationId": "front-desk",
@@ -466,8 +466,8 @@
     },
     {
       "id": "c10",
-      "title": "Journey 3/9 \u2014 Get them a quote",
-      "body": "Ballpark becomes a real proposal. Soft Ask tone \u2014 full scope beats a cheap partial. Margin Vault checks pretax health + 8.2% all-in tax. What we do: Build ballpark \u2192 scrubbed proposal. Margin Guard: C+A tax 8.2%, margin pretax. Thin margin = HOLD for Chance. Delco/MSA never auto-route. Customer sees: Nothing yet. Draft sits behind Chance Gate. Next: Proposal scrub pass \u00b7 Margin Guard \u00b7 queue at Chance Gate Note: Draft Soft Ask (call + email) now \u2014 send later only when Chance hits real Wrapstart SEND.",
+      "title": "Journey 3/9 — Get them a quote",
+      "body": "Ballpark becomes a real proposal. Soft Ask tone — full scope beats a cheap partial. Margin Vault checks pretax health + 8.2% all-in tax. What we do: Build ballpark → scrubbed proposal. Margin Guard: C+A tax 8.2%, margin pretax. Thin margin = HOLD for Chance. Delco/MSA never auto-route. Customer sees: Nothing yet. Draft sits behind Chance Gate. Next: Proposal scrub pass · Margin Guard · queue at Chance Gate Note: Draft Soft Ask (call + email) now — send later only when Chance hits real Wrapstart SEND.",
       "tone": "quote",
       "journeyId": "sj-quote",
       "stationId": "quote-forge",
@@ -478,8 +478,8 @@
     },
     {
       "id": "c11",
-      "title": "Journey 4/9 \u2014 Answer questions",
-      "body": "This is the Soft Ask window. Warm call, proposal link, answer their questions. You alone send anything customer-facing. What we do: Josh Soft Ask outbound if green-lit; Chance owns Delco/MSA. GO/HOLD on this deck = stub toasts only \u2014 no Wrapstart, Gmail, or SMS from the deck. Customer sees: Your Soft Ask (when you send from Wrapstart or yourself): kind, clear options, room for questions. No hard close spam. Next: Chance Soft Ask \u2192 Mark Sent in Wrapstart \u00b7 HOLD auto-send \u00b7 answer inbound Qs Note: Soft Ask = the name. Keep it. One lead, one Soft Ask \u2014 no mass blast.",
+      "title": "Journey 4/9 — Answer questions",
+      "body": "This is the Soft Ask window. Warm call, proposal link, answer their questions. You alone send anything customer-facing. What we do: Josh Soft Ask outbound if green-lit; Chance owns Delco/MSA. GO/HOLD on this deck = stub toasts only — no Wrapstart, Gmail, or SMS from the deck. Customer sees: Your Soft Ask (when you send from Wrapstart or yourself): kind, clear options, room for questions. No hard close spam. Next: Chance Soft Ask → Mark Sent in Wrapstart · HOLD auto-send · answer inbound Qs Note: Soft Ask = the name. Keep it. One lead, one Soft Ask — no mass blast.",
       "tone": "gate",
       "journeyId": "sj-questions",
       "stationId": "chance-gate",
@@ -493,8 +493,8 @@
     },
     {
       "id": "c12",
-      "title": "Journey 5/9 \u2014 Create proof / design",
-      "body": "Accept first, then 50% deposit clears Deposit Safe \u2014 then Design Studio opens. No free art on a handshake. What we do: After accept \u2192 invoice 50% of all-in \u2192 Design Studio art/templates \u2192 Print Bay when approved. Quotes never carry a deposit line. Customer sees: Deposit invoice, then proofs / mockups for sign-off. Production starts after design OK. Next: Confirm deposit cleared \u00b7 open Design \u00b7 customer proof approval \u00b7 release Print Bay",
+      "title": "Journey 5/9 — Create proof / design",
+      "body": "Accept first, then 50% deposit clears Deposit Safe — then Design Studio opens. No free art on a handshake. What we do: After accept → invoice 50% of all-in → Design Studio art/templates → Print Bay when approved. Quotes never carry a deposit line. Customer sees: Deposit invoice, then proofs / mockups for sign-off. Production starts after design OK. Next: Confirm deposit cleared · open Design · customer proof approval · release Print Bay",
       "tone": "deposit",
       "journeyId": "sj-proof",
       "stationId": "design-studio",
@@ -505,8 +505,8 @@
     },
     {
       "id": "c13",
-      "title": "Journey 6/9 \u2014 Schedule",
-      "body": "Lock the install window once design is signed. Schedule Board owns the calendar \u2014 wrap outside / upfit inside stay separate lanes. What we do: Book bay + crew + drop-off/pickup. Confirm vehicle drop time, keys, and any overnight. Hold buffer for materials from Print Bay. Customer sees: Confirm email/text with date, arrival window, what to bring. Still human-sent \u2014 not auto from this deck. Next: Pick install slot \u00b7 confirm with customer \u00b7 stage materials",
+      "title": "Journey 6/9 — Schedule",
+      "body": "Lock the install window once design is signed. Schedule Board owns the calendar — wrap outside / upfit inside stay separate lanes. What we do: Book bay + crew + drop-off/pickup. Confirm vehicle drop time, keys, and any overnight. Hold buffer for materials from Print Bay. Customer sees: Confirm email/text with date, arrival window, what to bring. Still human-sent — not auto from this deck. Next: Pick install slot · confirm with customer · stage materials",
       "tone": "schedule",
       "journeyId": "sj-schedule",
       "stationId": "schedule-board",
@@ -517,8 +517,8 @@
     },
     {
       "id": "c14",
-      "title": "Journey 7/9 \u2014 Wait on install",
-      "body": "Install day. Quality over speed. Keep the customer looped on status \u2014 happy install = referrals. What we do: Crew runs Install Bay. QC checklist. Photo the finished work. Flag punch-list early, not after they leave. Customer sees: Status updates (human). Pickup walkthrough. Care sheet. Next: QC sign-off \u00b7 capture finish photos \u00b7 move to Final payment",
+      "title": "Journey 7/9 — Wait on install",
+      "body": "Install day. Quality over speed. Keep the customer looped on status — happy install = referrals. What we do: Crew runs Install Bay. QC checklist. Photo the finished work. Flag punch-list early, not after they leave. Customer sees: Status updates (human). Pickup walkthrough. Care sheet. Next: QC sign-off · capture finish photos · move to Final payment",
       "tone": "install",
       "journeyId": "sj-install-wait",
       "stationId": "install-bay",
@@ -529,8 +529,8 @@
     },
     {
       "id": "c15",
-      "title": "Journey 8/9 \u2014 Final payment",
-      "body": "Balance due before keys roll. Deposit Safe already took 50% \u2014 Final Pay closes the rest. No awkward chase later. What we do: Invoice remaining balance (all-in). Collect payment. Release vehicle only when paid or Chance-approved terms. Customer sees: Final invoice + receipt. Clear line items. Thank-you note. Next: Collect balance \u00b7 mark job paid \u00b7 hand off to Review",
+      "title": "Journey 8/9 — Final payment",
+      "body": "Balance due before keys roll. Deposit Safe already took 50% — Final Pay closes the rest. No awkward chase later. What we do: Invoice remaining balance (all-in). Collect payment. Release vehicle only when paid or Chance-approved terms. Customer sees: Final invoice + receipt. Clear line items. Thank-you note. Next: Collect balance · mark job paid · hand off to Review",
       "tone": "pay",
       "journeyId": "sj-final-pay",
       "stationId": "final-pay",
@@ -541,8 +541,8 @@
     },
     {
       "id": "c16",
-      "title": "Journey 9/9 \u2014 Get review",
-      "body": "Close the loop while the win is fresh. Review Soft Ask \u2014 and Last Offer only here as a preview stub if we still need one more nudge. Still your SEND. What we do: Send review Soft Ask (Chance-approved). Optional Last Offer preview stub (no live send from deck). Log referral ask. Park photos. Update boardSnapshot. Customer sees: Short thank-you + review link. Optional referral ask. Never a blast list. Next: Review Soft Ask out \u00b7 optional Last Offer preview \u00b7 log stars \u00b7 mark journey complete Note: Review Soft Ask + optional Last Offer preview stub \u2014 warm, one customer, Chance SEND if customer-facing. Last Offer: Optional warm final nudge at review if still closing a gap. Same Soft Ask family. Chance SEND only \u2014 never from this deck tonight.",
+      "title": "Journey 9/9 — Get review",
+      "body": "Close the loop while the win is fresh. Review Soft Ask — and Last Offer only here as a preview stub if we still need one more nudge. Still your SEND. What we do: Send review Soft Ask (Chance-approved). Optional Last Offer preview stub (no live send from deck). Log referral ask. Park photos. Update boardSnapshot. Customer sees: Short thank-you + review link. Optional referral ask. Never a blast list. Next: Review Soft Ask out · optional Last Offer preview · log stars · mark journey complete Note: Review Soft Ask + optional Last Offer preview stub — warm, one customer, Chance SEND if customer-facing. Last Offer: Optional warm final nudge at review if still closing a gap. Same Soft Ask family. Chance SEND only — never from this deck tonight.",
       "tone": "review",
       "journeyId": "sj-review",
       "stationId": "review-radar",
@@ -553,14 +553,14 @@
         "enabled": true,
         "mode": "preview-stub",
         "title": "Last Offer (preview stub)",
-        "body": "Optional warm final nudge at review if still closing a gap. Same Soft Ask family. Chance SEND only \u2014 never from this deck tonight.",
-        "goStub": "Queued Last Offer preview for Chance \u2014 no live send"
+        "body": "Optional warm final nudge at review if still closing a gap. Same Soft Ask family. Chance SEND only — never from this deck tonight.",
+        "goStub": "Queued Last Offer preview for Chance — no live send"
       }
     },
     {
       "id": "c17",
       "title": "Back to Delco #1",
-      "body": "Journey map parked. Delco PR-0014 is still #1 \u2014 Soft Ask (call? + email? blanks for you) ready, nothing sent, GO/HOLD stubbed. Fill the blanks when you act. AI OFF.",
+      "body": "Journey map parked. Delco PR-0014 is still #1 — Soft Ask (call? + email? blanks for you) ready, nothing sent, GO/HOLD stubbed. Fill the blanks when you act. AI OFF.",
       "tone": "ready",
       "branch": "timeline",
       "botPlan": true,
@@ -574,14 +574,14 @@
   "jobs": [
     {
       "id": "job-delco-pr0014",
-      "title": "Delco PR-0014 \u2014 Fixed $29,807 / Folding $44,232",
+      "title": "Delco PR-0014 — Fixed $29,807 / Folding $44,232",
       "type": "upfit",
       "vehicle": "van",
       "station": "chance-gate",
       "lane": "lane-c",
       "status": "close-prep",
       "color": "#ffeaa7",
-      "summary": "Delco Transport \u00b7 PR-0014 Draft \u00b7 Fixed $29,807 / Folding $44,232 pretax. #1 on board \u2014 Soft Ask (call + email) ready. HOLD auto-send. AI OFF \u00b7 no live send from deck.",
+      "summary": "Delco Transport · PR-0014 Draft · Fixed $29,807 / Folding $44,232 pretax. #1 on board — Soft Ask (call + email) ready. HOLD auto-send. AI OFF · no live send from deck.",
       "confidenceOverall": "medium",
       "pricing": {
         "fixedPretax": 29807,
@@ -604,51 +604,51 @@
         {
           "id": "delco-s1",
           "label": "Confirm PR-0014 packet",
-          "detail": "Draft proposal PR-0014 \u00b7 BrightDrop 600\u00d72 + 400\u00d71 \u00b7 Fixed Steel $29,807 pretax / Folding $44,232 pretax \u00b7 8.2% tax \u00b7 valid to 2026-11-05. Scrubbed clean. sent_at=null.",
+          "detail": "Draft proposal PR-0014 · BrightDrop 600×2 + 400×1 · Fixed Steel $29,807 pretax / Folding $44,232 pretax · 8.2% tax · valid to 2026-11-05. Scrubbed clean. sent_at=null.",
           "confidence": "high",
           "stage": "intake"
         },
         {
           "id": "delco-s2",
           "label": "Delco = Chance-only gate",
-          "detail": "Hard rule: Delco/MSA never auto-route. Josh Soft Ask OFF. AI Engage OFF. Only Chance talks to Puneet. Control Deck companion narrates \u2014 never sends.",
+          "detail": "Hard rule: Delco/MSA never auto-route. Josh Soft Ask OFF. AI Engage OFF. Only Chance talks to Puneet. Control Deck companion narrates — never sends.",
           "confidence": "high",
           "stage": "routing"
         },
         {
           "id": "delco-s3",
           "label": "Soft Ask draft (no send)",
-          "detail": "Warm Soft Ask: call + proposal link. Lead Fixed (recommended). Mention Folding as premium clear-floor. MSA lever for Chance only \u2014 don't dump every lever on first touch.",
+          "detail": "Warm Soft Ask: call + proposal link. Lead Fixed (recommended). Mention Folding as premium clear-floor. MSA lever for Chance only — don't dump every lever on first touch.",
           "confidence": "medium",
           "stage": "quote"
         },
         {
           "id": "delco-s4",
           "label": "Margin + options check",
-          "detail": "Fixed parts $25,230 + install 19.9h\u00d7$230=$4,577 \u2192 $29,807 pretax. Folding $37,769 + 28.1h\u00d7$230=$6,463 \u2192 $44,232. Margin pretax healthy. Wrap mention-only.",
+          "detail": "Fixed parts $25,230 + install 19.9h×$230=$4,577 → $29,807 pretax. Folding $37,769 + 28.1h×$230=$6,463 → $44,232. Margin pretax healthy. Wrap mention-only.",
           "confidence": "high",
           "stage": "margin"
         },
         {
           "id": "delco-s5",
           "label": "Chance GO / HOLD (stub tonight)",
-          "detail": "GO and HOLD buttons are visible but stubbed \u2014 toast \"Coming \u2014 no live send tonight\". Real send = Wrapstart Approve or paste Soft Ask yourself. Stall ~48h; competitors in play.",
+          "detail": "GO and HOLD buttons are visible but stubbed — toast \"Coming — no live send tonight\". Real send = Wrapstart Approve or paste Soft Ask yourself. Stall ~48h; competitors in play.",
           "confidence": "high",
           "stage": "gate"
         },
         {
           "id": "delco-s6",
-          "label": "Accept \u2192 50% deposit invoice",
-          "detail": "deposit_required=false on quote. After accept \u2192 invoice 50% of all-in (Fixed \u2248$16,126 / Folding \u2248$23,930). THEN Design. No free art. No design on handshake.",
+          "label": "Accept → 50% deposit invoice",
+          "detail": "deposit_required=false on quote. After accept → invoice 50% of all-in (Fixed ≈$16,126 / Folding ≈$23,930). THEN Design. No free art. No design on handshake.",
           "confidence": "high",
           "stage": "deposit"
         }
       ],
-      "boardNext": "Chance Soft Ask (call + email) \u2192 Mark Sent \u00b7 HOLD auto-send",
+      "boardNext": "Chance Soft Ask (call + email) → Mark Sent · HOLD auto-send",
       "boardRank": 1,
       "synopsis": "Delco PR-0014 Soft Ask ready: Fixed $29,807 / Folding $44,232 pretax. Chance-only. Call + email blanks empty until you fill them. Nothing sent. AI OFF.",
       "stuck": true,
-      "stuckReason": "~48h stall \u00b7 competitors in play \u00b7 Soft Ask not sent \u00b7 waiting Chance GO",
+      "stuckReason": "~48h stall · competitors in play · Soft Ask not sent · waiting Chance GO",
       "softAskBlanks": {
         "call": null,
         "email": null
@@ -657,14 +657,14 @@
     },
     {
       "id": "job-transit-softask",
-      "title": "Inbound Transit wrap \u2014 Soft Ask",
+      "title": "Inbound Transit wrap — Soft Ask",
       "type": "wrap",
       "vehicle": "van",
       "station": "quote-forge",
       "lane": "lane-b",
       "status": "active",
       "color": "#fdcb6e",
-      "summary": "Fleet Transit just hit the form. Warm Soft Ask ballpark \u2014 kind, not pushy. Full-van scope beats a cheap partial.",
+      "summary": "Fleet Transit just hit the form. Warm Soft Ask ballpark — kind, not pushy. Full-van scope beats a cheap partial.",
       "confidenceOverall": "medium",
       "thinkPath": [
         {
@@ -677,7 +677,7 @@
         {
           "id": "j1-s2",
           "label": "Classify lane",
-          "detail": "Wrap outside \u2192 Wrapstart wrap lane. Not upfit, not DekWave. AI Engage still OFF.",
+          "detail": "Wrap outside → Wrapstart wrap lane. Not upfit, not DekWave. AI Engage still OFF.",
           "confidence": "high",
           "stage": "routing"
         },
@@ -691,7 +691,7 @@
         {
           "id": "j1-s4",
           "label": "Margin Guard check",
-          "detail": "Bake 8.2% all-in tax. Pretax margin band healthy? If thin \u2192 HOLD for Chance.",
+          "detail": "Bake 8.2% all-in tax. Pretax margin band healthy? If thin → HOLD for Chance.",
           "confidence": "high",
           "stage": "margin"
         },
@@ -703,7 +703,7 @@
           "stage": "gate"
         }
       ],
-      "synopsis": "Inbound Transit wrap \u2014 ballpark Soft Ask draft path. Full-van scope preferred. Not at Chance Gate yet.",
+      "synopsis": "Inbound Transit wrap — ballpark Soft Ask draft path. Full-van scope preferred. Not at Chance Gate yet.",
       "stuck": false,
       "stuckReason": null,
       "softAskBlanks": {
@@ -755,7 +755,7 @@
         {
           "id": "j3-s5",
           "label": "Chance SEND then Dock",
-          "detail": "Proposal through Chance Gate. After accept + deposit \u2192 design \u2192 install at marina.",
+          "detail": "Proposal through Chance Gate. After accept + deposit → design → install at marina.",
           "confidence": "high",
           "stage": "gate"
         }
@@ -771,14 +771,14 @@
     },
     {
       "id": "job-amit-pr0026",
-      "title": "Amit PR-0026 \u2014 pending send",
+      "title": "Amit PR-0026 — pending send",
       "type": "wrap",
       "vehicle": "van",
       "station": "chance-gate",
       "lane": "lane-c",
       "status": "pending-send",
       "color": "#e17055",
-      "summary": "Amit PR-0026 sent/viewed (~$1,531 all-in). Watch accept \u2192 50% deposit. No resend. Trazer optional later.",
+      "summary": "Amit PR-0026 sent/viewed (~$1,531 all-in). Watch accept → 50% deposit. No resend. Trazer optional later.",
       "confidenceOverall": "high",
       "thinkPath": [
         {
@@ -812,14 +812,14 @@
         {
           "id": "j4-s5",
           "label": "Await Chance SEND",
-          "detail": "One click from Chance \u2192 customer sees it. After accept \u2192 deposit \u2192 design.",
+          "detail": "One click from Chance → customer sees it. After accept → deposit → design.",
           "confidence": "high",
           "stage": "gate"
         }
       ],
-      "boardNext": "Watch accept \u00b7 no resend",
+      "boardNext": "Watch accept · no resend",
       "boardRank": 3,
-      "synopsis": "Amit PR-0026 already sent/viewed (~$1,531 all-in). Watch accept \u2192 50% deposit. No resend.",
+      "synopsis": "Amit PR-0026 already sent/viewed (~$1,531 all-in). Watch accept → 50% deposit. No resend.",
       "stuck": false,
       "stuckReason": null,
       "softAskBlanks": {
@@ -830,7 +830,7 @@
     },
     {
       "id": "job-practice-wallco92",
-      "title": "Practice \u2014 wallco92 only",
+      "title": "Practice — wallco92 only",
       "type": "practice",
       "vehicle": "van",
       "station": "front-desk",
@@ -849,8 +849,8 @@
         },
         {
           "id": "j5-s2",
-          "label": "Simulate form \u2192 Wrapstart",
-          "detail": "Walk Receptionist capture. Lead Agent still OFF for real engage \u2014 practice drafts only.",
+          "label": "Simulate form → Wrapstart",
+          "detail": "Walk Receptionist capture. Lead Agent still OFF for real engage — practice drafts only.",
           "confidence": "high",
           "stage": "routing"
         },
@@ -889,31 +889,31 @@
   "futureCards": [
     {
       "phase": "0",
-      "emoji": "\ud83e\uddea",
-      "title": "Now \u2014 Train OFF",
-      "blurb": "Receptionist + Lead trained in Wrapstart. Engage OFF. Answer Off. Control Deck = hologram body \u00b7 Soft Ask whiteboard. Jarvis (Grok hub) drafts \u2014 you GO."
+      "emoji": "🧪",
+      "title": "Now — Train OFF",
+      "blurb": "Receptionist + Lead trained in Wrapstart. Engage OFF. Answer Off. Control Deck = hologram body · Soft Ask whiteboard. Jarvis (Grok hub) drafts — you GO."
     },
     {
       "phase": "1",
-      "emoji": "\ud83e\udde0",
-      "title": "Control deck v0.9.2-timeline",
-      "blurb": "Timeline journey branch \u00b7 all bot steps visible \u00b7 one next-step page \u00b7 Soft Ask blanks (call?/email?) \u00b7 Last Offer preview at review \u00b7 AI OFF \u00b7 no live send."
+      "emoji": "🧠",
+      "title": "Control deck v0.9.3-clean",
+      "blurb": "Timeline journey branch · all bot steps visible · one next-step page · Soft Ask blanks (call?/email?) · Last Offer preview at review · AI OFF · no live send."
     },
     {
       "phase": "2",
-      "emoji": "\ud83c\udf99\ufe0f",
+      "emoji": "🎙️",
       "title": "Non-typing control",
-      "blurb": "Vault mission rail + brain thoughts: What\u2019s hot, what to do next, GO/HOLD. Think path in plain English. AI OFF. No live send. No game layer."
+      "blurb": "Vault mission rail + brain thoughts: What’s hot, what to do next, GO/HOLD. Think path in plain English. AI OFF. No live send. No game layer."
     },
     {
       "phase": "3",
-      "emoji": "\ud83d\udea6",
+      "emoji": "🚦",
       "title": "AI ON carefully",
-      "blurb": "Practice wallco92 \u2192 named leads \u2192 Engage. Receptionist after scripts. Approval Required. Max discount 0. Delco/MSA forever human."
+      "blurb": "Practice wallco92 → named leads → Engage. Receptionist after scripts. Approval Required. Max discount 0. Delco/MSA forever human."
     },
     {
       "phase": "4",
-      "emoji": "\ud83d\udd01",
+      "emoji": "🔁",
       "title": "Closed loop",
       "blurb": "Live Wrapstart jobs on the map. Your feedback clicks become standing rules / KB. Confidence meters learn from corrections."
     }
@@ -930,33 +930,33 @@
       "label": "Delco Soft Ask",
       "rank": 1,
       "next": "Chance Soft Ask (call + email) then Mark Sent. HOLD auto-send.",
-      "goHold": "HOLD \u2014 Chance GO only"
+      "goHold": "HOLD — Chance GO only"
     },
     "top5": [
       {
         "id": "PR-0014",
         "who": "Delco",
-        "next": "Soft Ask call + email \u00b7 Mark Sent \u00b7 HOLD auto-send"
+        "next": "Soft Ask call + email · Mark Sent · HOLD auto-send"
       },
       {
         "id": "PR-0015",
         "who": "Nate / Wombat",
-        "next": "Viewed 4\u00d7 \u00b7 watch accept \u2192 50% deposit \u00b7 no re-email"
+        "next": "Viewed 4× · watch accept → 50% deposit · no re-email"
       },
       {
         "id": "PR-0026",
         "who": "Amit",
-        "next": "Sent/viewed \u00b7 watch accept \u00b7 Trazer optional later"
+        "next": "Sent/viewed · watch accept · Trazer optional later"
       },
       {
         "id": "PR-0016",
         "who": "H20 Away",
-        "next": "High-$ draft \u00b7 media polish \u2192 Chance GO"
+        "next": "High-$ draft · media polish → Chance GO"
       },
       {
         "id": "QT-0149",
         "who": "Omar",
-        "next": "Boat package sent \u00b7 deposit pending $2,500"
+        "next": "Boat package sent · deposit pending $2,500"
       }
     ]
   },
@@ -969,11 +969,11 @@
       "alsoStations": [
         "front-desk"
       ],
-      "jarvisLine": "Lead just splashed in. We park it \u2014 nobody auto-pings the customer. AI stays OFF until you say GO.",
+      "jarvisLine": "Lead just splashed in. We park it — nobody auto-pings the customer. AI stays OFF until you say GO.",
       "whatWeDo": "Form hits Wrapstart Front Desk. Receptionist captures; Lead Agent stays OFF. Sort wrap / upfit / DekWave into Lead Lake.",
       "whatCustomerSees": "Thank-you / we got it page only. No Soft Ask yet. No AI chat.",
-      "nextAction": "Open the lead card \u00b7 confirm vehicle + scope hints \u00b7 move to Capture",
-      "softAskNote": "Soft Ask name stays for later outbound \u2014 not this step."
+      "nextAction": "Open the lead card · confirm vehicle + scope hints · move to Capture",
+      "softAskNote": "Soft Ask name stays for later outbound — not this step."
     },
     {
       "id": "sj-capture",
@@ -983,10 +983,10 @@
       "alsoStations": [
         "lead-lake"
       ],
-      "jarvisLine": "Fill the blanks before we price anything. Photos, fleet size, zip, timeline \u2014 junk in means junk quotes.",
+      "jarvisLine": "Fill the blanks before we price anything. Photos, fleet size, zip, timeline — junk in means junk quotes.",
       "whatWeDo": "Human (or practice wallco92) completes intake: vehicle, area, fleet count, zip for tax, timeline, contact. Scrub for Delco/MSA Chance-only tags.",
-      "whatCustomerSees": "Maybe a short clarifying call or form follow-up \u2014 only if Chance green-lights. Deck never sends.",
-      "nextAction": "Mark intake complete \u00b7 hand packet to Quote Forge",
+      "whatCustomerSees": "Maybe a short clarifying call or form follow-up — only if Chance green-lights. Deck never sends.",
+      "nextAction": "Mark intake complete · hand packet to Quote Forge",
       "softAskNote": null
     },
     {
@@ -997,11 +997,11 @@
       "alsoStations": [
         "margin-vault"
       ],
-      "jarvisLine": "Ballpark becomes a real proposal. Soft Ask tone \u2014 full scope beats a cheap partial. Margin Vault checks pretax health + 8.2% all-in tax.",
-      "whatWeDo": "Build ballpark \u2192 scrubbed proposal. Margin Guard: C+A tax 8.2%, margin pretax. Thin margin = HOLD for Chance. Delco/MSA never auto-route.",
+      "jarvisLine": "Ballpark becomes a real proposal. Soft Ask tone — full scope beats a cheap partial. Margin Vault checks pretax health + 8.2% all-in tax.",
+      "whatWeDo": "Build ballpark → scrubbed proposal. Margin Guard: C+A tax 8.2%, margin pretax. Thin margin = HOLD for Chance. Delco/MSA never auto-route.",
       "whatCustomerSees": "Nothing yet. Draft sits behind Chance Gate.",
-      "nextAction": "Proposal scrub pass \u00b7 Margin Guard \u00b7 queue at Chance Gate",
-      "softAskNote": "Draft Soft Ask (call + email) now \u2014 send later only when Chance hits real Wrapstart SEND."
+      "nextAction": "Proposal scrub pass · Margin Guard · queue at Chance Gate",
+      "softAskNote": "Draft Soft Ask (call + email) now — send later only when Chance hits real Wrapstart SEND."
     },
     {
       "id": "sj-questions",
@@ -1012,10 +1012,10 @@
         "quote-forge"
       ],
       "jarvisLine": "This is the Soft Ask window. Warm call, proposal link, answer their questions. You alone send anything customer-facing.",
-      "whatWeDo": "Josh Soft Ask outbound if green-lit; Chance owns Delco/MSA. GO/HOLD on this deck = stub toasts only \u2014 no Wrapstart, Gmail, or SMS from the deck.",
+      "whatWeDo": "Josh Soft Ask outbound if green-lit; Chance owns Delco/MSA. GO/HOLD on this deck = stub toasts only — no Wrapstart, Gmail, or SMS from the deck.",
       "whatCustomerSees": "Your Soft Ask (when you send from Wrapstart or yourself): kind, clear options, room for questions. No hard close spam.",
-      "nextAction": "Chance Soft Ask \u2192 Mark Sent in Wrapstart \u00b7 HOLD auto-send \u00b7 answer inbound Qs",
-      "softAskNote": "Soft Ask = the name. Keep it. One lead, one Soft Ask \u2014 no mass blast."
+      "nextAction": "Chance Soft Ask → Mark Sent in Wrapstart · HOLD auto-send · answer inbound Qs",
+      "softAskNote": "Soft Ask = the name. Keep it. One lead, one Soft Ask — no mass blast."
     },
     {
       "id": "sj-proof",
@@ -1026,10 +1026,10 @@
         "deposit-safe",
         "print-bay"
       ],
-      "jarvisLine": "Accept first, then 50% deposit clears Deposit Safe \u2014 then Design Studio opens. No free art on a handshake.",
-      "whatWeDo": "After accept \u2192 invoice 50% of all-in \u2192 Design Studio art/templates \u2192 Print Bay when approved. Quotes never carry a deposit line.",
+      "jarvisLine": "Accept first, then 50% deposit clears Deposit Safe — then Design Studio opens. No free art on a handshake.",
+      "whatWeDo": "After accept → invoice 50% of all-in → Design Studio art/templates → Print Bay when approved. Quotes never carry a deposit line.",
       "whatCustomerSees": "Deposit invoice, then proofs / mockups for sign-off. Production starts after design OK.",
-      "nextAction": "Confirm deposit cleared \u00b7 open Design \u00b7 customer proof approval \u00b7 release Print Bay",
+      "nextAction": "Confirm deposit cleared · open Design · customer proof approval · release Print Bay",
       "softAskNote": null
     },
     {
@@ -1040,10 +1040,10 @@
       "alsoStations": [
         "install-bay"
       ],
-      "jarvisLine": "Lock the install window once design is signed. Schedule Board owns the calendar \u2014 wrap outside / upfit inside stay separate lanes.",
+      "jarvisLine": "Lock the install window once design is signed. Schedule Board owns the calendar — wrap outside / upfit inside stay separate lanes.",
       "whatWeDo": "Book bay + crew + drop-off/pickup. Confirm vehicle drop time, keys, and any overnight. Hold buffer for materials from Print Bay.",
-      "whatCustomerSees": "Confirm email/text with date, arrival window, what to bring. Still human-sent \u2014 not auto from this deck.",
-      "nextAction": "Pick install slot \u00b7 confirm with customer \u00b7 stage materials",
+      "whatCustomerSees": "Confirm email/text with date, arrival window, what to bring. Still human-sent — not auto from this deck.",
+      "nextAction": "Pick install slot · confirm with customer · stage materials",
       "softAskNote": null
     },
     {
@@ -1055,10 +1055,10 @@
         "print-bay",
         "schedule-board"
       ],
-      "jarvisLine": "Install day. Quality over speed. Keep the customer looped on status \u2014 happy install = referrals.",
+      "jarvisLine": "Install day. Quality over speed. Keep the customer looped on status — happy install = referrals.",
       "whatWeDo": "Crew runs Install Bay. QC checklist. Photo the finished work. Flag punch-list early, not after they leave.",
       "whatCustomerSees": "Status updates (human). Pickup walkthrough. Care sheet.",
-      "nextAction": "QC sign-off \u00b7 capture finish photos \u00b7 move to Final payment",
+      "nextAction": "QC sign-off · capture finish photos · move to Final payment",
       "softAskNote": null
     },
     {
@@ -1069,10 +1069,10 @@
       "alsoStations": [
         "deposit-safe"
       ],
-      "jarvisLine": "Balance due before keys roll. Deposit Safe already took 50% \u2014 Final Pay closes the rest. No awkward chase later.",
+      "jarvisLine": "Balance due before keys roll. Deposit Safe already took 50% — Final Pay closes the rest. No awkward chase later.",
       "whatWeDo": "Invoice remaining balance (all-in). Collect payment. Release vehicle only when paid or Chance-approved terms.",
       "whatCustomerSees": "Final invoice + receipt. Clear line items. Thank-you note.",
-      "nextAction": "Collect balance \u00b7 mark job paid \u00b7 hand off to Review",
+      "nextAction": "Collect balance · mark job paid · hand off to Review",
       "softAskNote": null
     },
     {
@@ -1083,17 +1083,17 @@
       "alsoStations": [
         "install-bay"
       ],
-      "jarvisLine": "Close the loop while the win is fresh. Review Soft Ask \u2014 and Last Offer only here as a preview stub if we still need one more nudge. Still your SEND.",
+      "jarvisLine": "Close the loop while the win is fresh. Review Soft Ask — and Last Offer only here as a preview stub if we still need one more nudge. Still your SEND.",
       "whatWeDo": "Send review Soft Ask (Chance-approved). Optional Last Offer preview stub (no live send from deck). Log referral ask. Park photos. Update boardSnapshot.",
       "whatCustomerSees": "Short thank-you + review link. Optional referral ask. Never a blast list.",
-      "nextAction": "Review Soft Ask out \u00b7 optional Last Offer preview \u00b7 log stars \u00b7 mark journey complete",
-      "softAskNote": "Review Soft Ask + optional Last Offer preview stub \u2014 warm, one customer, Chance SEND if customer-facing.",
+      "nextAction": "Review Soft Ask out · optional Last Offer preview · log stars · mark journey complete",
+      "softAskNote": "Review Soft Ask + optional Last Offer preview stub — warm, one customer, Chance SEND if customer-facing.",
       "lastOfferPreview": {
         "enabled": true,
         "mode": "preview-stub",
         "title": "Last Offer (preview stub)",
-        "body": "Optional warm final nudge at review if still closing a gap. Same Soft Ask family. Chance SEND only \u2014 never from this deck tonight.",
-        "goStub": "Queued Last Offer preview for Chance \u2014 no live send"
+        "body": "Optional warm final nudge at review if still closing a gap. Same Soft Ask family. Chance SEND only — never from this deck tonight.",
+        "goStub": "Queued Last Offer preview for Chance — no live send"
       }
     }
   ],
@@ -1110,7 +1110,7 @@
   ],
   "timelineBranch": {
     "id": "delco-softask-timeline",
-    "label": "Delco Soft Ask \u00b7 bot plan",
+    "label": "Delco Soft Ask · bot plan",
     "defaultOpen": true,
     "jobId": "job-delco-pr0014",
     "narrationMode": "bot-plan",
@@ -1119,21 +1119,21 @@
       {
         "id": "tl-1",
         "title": "Packet confirmed",
-        "botPlan": "PR-0014 scrubbed: BrightDrop 600\u00d72 + 400\u00d71 \u00b7 Fixed $29,807 / Folding $44,232 pretax \u00b7 8.2% tax \u00b7 valid to 2026-11-05. sent_at=null.",
+        "botPlan": "PR-0014 scrubbed: BrightDrop 600×2 + 400×1 · Fixed $29,807 / Folding $44,232 pretax · 8.2% tax · valid to 2026-11-05. sent_at=null.",
         "chanceBlank": null,
         "tone": "ready"
       },
       {
         "id": "tl-2",
         "title": "Chance-only gate",
-        "botPlan": "Delco/MSA never auto-route. Josh Soft Ask OFF. AI Engage OFF. Only you talk to Puneet. Deck narrates \u2014 never sends.",
+        "botPlan": "Delco/MSA never auto-route. Josh Soft Ask OFF. AI Engage OFF. Only you talk to Puneet. Deck narrates — never sends.",
         "chanceBlank": null,
         "tone": "wait"
       },
       {
         "id": "tl-3",
         "title": "Soft Ask draft ready",
-        "botPlan": "Warm Soft Ask: call + proposal link. Lead Fixed (recommended). Folding = premium clear-floor. MSA lever stays with you \u2014 don't dump every lever on first touch.",
+        "botPlan": "Warm Soft Ask: call + proposal link. Lead Fixed (recommended). Folding = premium clear-floor. MSA lever stays with you — don't dump every lever on first touch.",
         "chanceBlank": {
           "call": true,
           "email": true
@@ -1143,14 +1143,14 @@
       {
         "id": "tl-4",
         "title": "Margin healthy",
-        "botPlan": "Fixed parts $25,230 + install 19.9h\u00d7$230=$4,577 \u2192 $29,807 pretax. Folding $37,769 + 28.1h\u00d7$230=$6,463 \u2192 $44,232. Margin pretax healthy. Wrap mention-only.",
+        "botPlan": "Fixed parts $25,230 + install 19.9h×$230=$4,577 → $29,807 pretax. Folding $37,769 + 28.1h×$230=$6,463 → $44,232. Margin pretax healthy. Wrap mention-only.",
         "chanceBlank": null,
         "tone": "ready"
       },
       {
         "id": "tl-5",
         "title": "Your GO / HOLD",
-        "botPlan": "Deck GO queues a stub for you \u2014 no Wrapstart, Gmail, or SMS from here. Real Soft Ask send stays in Wrapstart when you choose. HOLD parks it. Stall ~48h; competitors in play.",
+        "botPlan": "Deck GO queues a stub for you — no Wrapstart, Gmail, or SMS from here. Real Soft Ask send stays in Wrapstart when you choose. HOLD parks it. Stall ~48h; competitors in play.",
         "chanceBlank": {
           "call": true,
           "email": true
@@ -1160,14 +1160,14 @@
       {
         "id": "tl-6",
         "title": "If they accept",
-        "botPlan": "After accept \u2192 invoice 50% of all-in (Fixed \u2248$16,126 / Folding \u2248$23,930). THEN Design. No free art on a handshake. Quotes carry no deposit line.",
+        "botPlan": "After accept → invoice 50% of all-in (Fixed ≈$16,126 / Folding ≈$23,930). THEN Design. No free art on a handshake. Quotes carry no deposit line.",
         "chanceBlank": null,
         "tone": "deposit"
       },
       {
         "id": "tl-7",
         "title": "Sales journey map",
-        "botPlan": "Every job follows inquiry \u2192 capture \u2192 quote \u2192 Soft Ask questions \u2192 proof \u2192 schedule \u2192 install \u2192 final pay \u2192 review. Delco stays #1 while we walk the map.",
+        "botPlan": "Every job follows inquiry → capture → quote → Soft Ask questions → proof → schedule → install → final pay → review. Delco stays #1 while we walk the map.",
         "chanceBlank": null,
         "tone": "journey",
         "opensJourney": true

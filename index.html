@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Control Deck v0.9.2-timeline — USA Wrap Co</title>
+  <title>Control Deck v0.9.3-clean — USA Wrap Co</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -22,18 +22,35 @@
     <div class="vault-grid" aria-hidden="true"></div>
     <div class="vault-scan" aria-hidden="true"></div>
 
+    <!-- 1. Slim top — brand + AI OFF + essentials; secondary chrome collapsed -->
     <header id="top-bar">
       <div class="brand">
         <span class="logo-mark" aria-hidden="true">◈</span>
         <div>
           <h1>CONTROL DECK</h1>
-          <p class="tagline">v0.9.2-timeline · AI OFF · no live send</p>
+          <p class="tagline">v0.9.3-clean · AI OFF · no live send</p>
         </div>
       </div>
       <div class="mission-chip" id="mission-chip" title="Shop mission">
         <span class="mission-prefix">STATUS //</span>
         <span class="mission-text">Loading…</span>
       </div>
+      <div class="top-actions">
+        <div id="ai-off-badge" class="ai-off-badge" title="Engage OFF · Answer calls Off · hardcoded — never wire live AI ON">
+          AI OFF
+          <span class="ai-off-sub">Engage OFF · Answer Off</span>
+        </div>
+        <button type="button" id="btn-jarvis" class="btn jarvis-toggle on" aria-pressed="true" title="Jarvis ON/OFF — Grok Bot voice · hologram body · tap to toggle">
+          <span class="jarvis-toggle-mark" aria-hidden="true">◈</span>
+          <span class="jarvis-toggle-label">JARVIS</span>
+          <span class="jarvis-toggle-state" id="jarvis-toggle-state">ON</span>
+        </button>
+        <button type="button" id="btn-chrome" class="btn ghost" aria-expanded="false" title="Board, meters, tools">⋯</button>
+      </div>
+    </header>
+
+    <!-- Collapsed chrome strip (board / meters / tools) -->
+    <div id="chrome-strip" class="chrome-strip collapsed" aria-hidden="true">
       <div class="ops-meters" id="ops-meters" aria-label="Ops meters">
         <div class="meter" title="Jobs that need Chance">
           <span class="meter-k">NEED YOU</span>
@@ -44,82 +61,118 @@
           <span class="meter-v" id="meter-delco">—</span>
         </div>
       </div>
-      <div class="top-actions">
+      <div class="chrome-actions">
         <button type="button" id="btn-board" class="btn ghost" title="On board">BOARD</button>
-        <button type="button" id="btn-jarvis" class="btn jarvis-toggle on" aria-pressed="true" title="Jarvis ON/OFF — Grok Bot voice · hologram body · tap to toggle">
-          <span class="jarvis-toggle-mark" aria-hidden="true">◈</span>
-          <span class="jarvis-toggle-label">JARVIS</span>
-          <span class="jarvis-toggle-state" id="jarvis-toggle-state">ON</span>
-        </button>
-        <div id="ai-off-badge" class="ai-off-badge" title="Engage OFF · Answer calls Off · hardcoded — never wire live AI ON">
-          AI OFF
-          <span class="ai-off-sub">Engage OFF · Answer Off</span>
-        </div>
         <button type="button" id="btn-more" class="btn ghost" title="Lanes, rules, future">MORE</button>
+        <button type="button" id="btn-jarvis-mute" class="btn ghost jarvis-mute muted" aria-pressed="true" title="Voice beep muted by default">🔇 MUTE</button>
+        <button type="button" id="btn-jarvis-listen" class="btn ghost jarvis-listen" title="Listening UI — Web Speech if available">🎤 LISTEN</button>
+        <button type="button" id="btn-wb-cycle" class="btn ghost" title="Cycle whiteboard: Soft Ask · jobs · email">⬜ BOARD VIEW</button>
       </div>
-    </header>
+    </div>
 
-    <main id="holo-stage" aria-label="Jarvis hologram stage" data-motion="softask">
-      <canvas id="holo-canvas"></canvas>
-      <canvas id="live-motion" class="live-motion" aria-hidden="true"></canvas>
-
-      <div class="holo-hud" id="holo-hud">
-        <div class="holo-id">
-          <span class="holo-kicker">JARVIS · GROK HUB</span>
-          <span class="holo-status" id="jarvis-status" data-mode="briefing">briefing Delco</span>
+    <!-- Workspace: (2) timeline map | hologram + (1) command center -->
+    <div id="workspace">
+      <!-- 2. Timeline branch as clear map -->
+      <aside id="timeline-map" aria-label="Bot plan timeline map">
+        <div class="map-head">
+          <span class="map-kicker">TIMELINE MAP</span>
+          <span class="map-sub" id="map-sub">Delco Soft Ask</span>
         </div>
-        <p class="holo-brief" id="jarvis-brief" aria-live="polite">Delco Soft Ask bot plan ready — fill call?/email? when you act.</p>
-        <div class="holo-controls">
-          <button type="button" id="btn-jarvis-mute" class="btn ghost jarvis-mute muted" aria-pressed="true" title="Voice beep muted by default">🔇 MUTE</button>
-          <button type="button" id="btn-jarvis-listen" class="btn ghost jarvis-listen" title="Listening UI — Web Speech if available">🎤 LISTEN</button>
-          <button type="button" id="btn-wb-cycle" class="btn ghost" title="Cycle whiteboard: Soft Ask · jobs · email">⬜ BOARD VIEW</button>
-        </div>
-        <div class="holo-softask-chip" id="softask-chip" title="Soft Ask name stays">
-          <span class="sa-dot" aria-hidden="true"></span>
-          <span id="softask-chip-text">Soft Ask · Delco PR-0014</span>
-        </div>
-        <div class="live-context" id="live-context" aria-live="polite">
-          <div class="live-context-mode">
-            <span class="live-pulse" aria-hidden="true"></span>
-            <span id="live-mode-label">SOFT ASK</span>
+        <div class="job-synopsis" id="job-synopsis" aria-live="polite">
+          <div class="synopsis-top">
+            <span class="synopsis-kicker">Synopsis</span>
+            <span class="stuck-flag hidden" id="stuck-flag" title="Stuck">STUCK</span>
           </div>
-          <div class="live-context-title" id="live-context-title">Delco PR-0014 · Soft Ask ready</div>
-          <div class="live-context-sub" id="live-context-sub">Hot job · nothing sent · AI OFF</div>
-          <div class="live-progress" id="live-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-            <div class="live-progress-fill" id="live-progress-fill"></div>
+          <p class="synopsis-body" id="synopsis-body">Loading…</p>
+          <p class="stuck-reason hidden" id="stuck-reason"></p>
+        </div>
+        <div class="timeline-rail" id="timeline-rail" aria-label="Bot plan timeline — all steps visible"></div>
+      </aside>
+
+      <!-- 3. Hologram secondary (ambient stage) -->
+      <main id="holo-stage" aria-label="Jarvis hologram stage" data-motion="softask">
+        <canvas id="holo-canvas"></canvas>
+        <canvas id="live-motion" class="live-motion" aria-hidden="true"></canvas>
+
+        <div class="holo-hud" id="holo-hud">
+          <div class="holo-id">
+            <span class="holo-kicker">JARVIS · GROK HUB</span>
+            <span class="holo-status" id="jarvis-status" data-mode="briefing">briefing Delco</span>
+          </div>
+          <p class="holo-brief" id="jarvis-brief" aria-live="polite">Delco Soft Ask bot plan ready — fill call?/email? when you act.</p>
+          <div class="holo-softask-chip" id="softask-chip" title="Soft Ask name stays">
+            <span class="sa-dot" aria-hidden="true"></span>
+            <span id="softask-chip-text">Soft Ask · Delco PR-0014</span>
+          </div>
+          <div class="live-context" id="live-context" aria-live="polite">
+            <div class="live-context-mode">
+              <span class="live-pulse" aria-hidden="true"></span>
+              <span id="live-mode-label">SOFT ASK</span>
+            </div>
+            <div class="live-context-title" id="live-context-title">Delco PR-0014 · Soft Ask ready</div>
+            <div class="live-context-sub" id="live-context-sub">Hot job · nothing sent · AI OFF</div>
+            <div class="live-progress" id="live-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <div class="live-progress-fill" id="live-progress-fill"></div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="holo-fallback" id="holo-fallback" hidden>
-        <p>WebGL unavailable — Soft Ask dock still works. AI OFF.</p>
-      </div>
-    </main>
-
-    <section id="simple-dock" aria-label="What to do now">
-      <button type="button" id="hot-card" class="hot-card" title="Focus Delco">
-        <span class="hot-kicker">What’s hot</span>
-        <span class="hot-title" id="hot-title">Delco PR-0014</span>
-        <span class="hot-sub" id="hot-sub">Soft Ask · not sent</span>
-      </button>
-
-      <div class="next-card">
-        <span class="next-kicker">What to do next</span>
-        <p class="next-action" id="next-action">Loading…</p>
-        <div class="next-meta">
-          <button type="button" id="btn-show-steps" class="link-btn" aria-expanded="true">Hide Jarvis</button>
-          <button type="button" id="btn-comp-prev" class="btn ghost dock-nav">←</button>
-          <span id="companion-step-label" class="companion-step-label">1 / 17</span>
-          <button type="button" id="btn-comp-next" class="btn ghost dock-nav">→</button>
+        <div class="holo-fallback" id="holo-fallback" hidden>
+          <p>WebGL unavailable — Soft Ask dock still works. AI OFF.</p>
         </div>
-      </div>
 
-      <div class="dock-gate">
-        <button type="button" id="btn-comp-go" class="btn go big" title="Stub — queues for Chance, no live send">▶ GO</button>
-        <button type="button" id="btn-comp-hold" class="btn hold big" title="Stub — park only">⏸ HOLD</button>
-      </div>
+        <!-- 1. PRIMARY: one next-step + blanks + Next/Back + GO/HOLD -->
+        <section id="command-center" aria-label="What to do next">
+          <button type="button" id="hot-card" class="hot-chip" title="Focus Delco">
+            <span class="hot-kicker">Hot</span>
+            <span class="hot-title" id="hot-title">Delco PR-0014</span>
+            <span class="hot-sub" id="hot-sub">Soft Ask · not sent</span>
+          </button>
+
+          <div class="command-card">
+            <div class="command-kicker-row">
+              <span class="next-kicker">What to do next</span>
+              <span id="companion-step-label" class="companion-step-label">1 / 17</span>
+              <span id="steps-step-label" class="sr-only">1 / 17</span>
+            </div>
+            <p class="next-action" id="next-action">Loading…</p>
+            <div id="companion-feed" class="companion-feed"></div>
+
+            <div class="softask-blanks" id="softask-blanks" hidden>
+              <div class="blanks-kicker">Soft Ask blanks · Chance fills only</div>
+              <label class="blank-check"><input type="checkbox" id="blank-call" /> call?</label>
+              <label class="blank-check"><input type="checkbox" id="blank-email" /> email?</label>
+              <span class="blanks-hint">Local only · never sends</span>
+            </div>
+
+            <div class="lastoffer-preview hidden" id="lastoffer-preview" aria-live="polite">
+              <div class="lo-kicker">Last Offer · review only · preview stub</div>
+              <p class="lo-body" id="lastoffer-body"></p>
+              <button type="button" id="btn-lastoffer-stub" class="btn ghost">Preview Last Offer (stub)</button>
+            </div>
+
+            <div class="command-nav">
+              <button type="button" id="btn-comp-prev" class="btn ghost">← Back</button>
+              <button type="button" id="btn-steps-prev" class="sr-only">← Back</button>
+              <button type="button" id="btn-comp-next" class="btn primary">Next →</button>
+              <button type="button" id="btn-steps-next" class="sr-only">Next →</button>
+            </div>
+
+            <div class="dock-gate">
+              <button type="button" id="btn-comp-go" class="btn go big" title="Stub — queues for Chance, no live send">▶ GO</button>
+              <button type="button" id="btn-comp-hold" class="btn hold big" title="Stub — park only">⏸ HOLD</button>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Legacy simple-dock kept minimal / hidden — IDs moved into command-center -->
+    <section id="simple-dock" class="sr-only" aria-hidden="true">
+      <button type="button" id="btn-show-steps" class="link-btn" aria-expanded="false">Map</button>
     </section>
 
+    <!-- Drawers (secondary chrome) -->
     <aside id="board-panel" class="hidden glass-panel" aria-label="On board" aria-live="polite">
       <div class="panel-head">
         <div>
@@ -133,41 +186,16 @@
       <div id="board-list" class="board-list"></div>
     </aside>
 
-    <aside id="steps-panel" class="glass-panel" aria-label="Jarvis thoughts" aria-live="polite">
+    <!-- steps-panel: think-path chrome only (hidden by default) -->
+    <aside id="steps-panel" class="glass-panel hidden" aria-label="Think path" aria-live="polite">
       <div class="steps-head">
         <div>
-          <h2>Jarvis · Grok hub</h2>
-          <p class="hint-sm">Voice = Grok Bot · narrates bot plan · timeline visible · blanks = you</p>
+          <h2>Think path</h2>
+          <p class="hint-sm">Detail extras · optional</p>
         </div>
         <button type="button" id="btn-hide-steps" class="btn-icon" title="Hide">✕</button>
       </div>
-      <div class="job-synopsis" id="job-synopsis" aria-live="polite">
-        <div class="synopsis-top">
-          <span class="synopsis-kicker">Synopsis</span>
-          <span class="stuck-flag hidden" id="stuck-flag" title="Stuck">STUCK</span>
-        </div>
-        <p class="synopsis-body" id="synopsis-body">Loading…</p>
-        <p class="stuck-reason hidden" id="stuck-reason"></p>
-      </div>
-      <div class="timeline-rail" id="timeline-rail" aria-label="Bot plan timeline — all steps visible"></div>
-      <div id="companion-feed" class="companion-feed"></div>
-      <div class="softask-blanks" id="softask-blanks" hidden>
-        <div class="blanks-kicker">Soft Ask blanks · Chance fills only</div>
-        <label class="blank-check"><input type="checkbox" id="blank-call" /> call?</label>
-        <label class="blank-check"><input type="checkbox" id="blank-email" /> email?</label>
-        <span class="blanks-hint">Local only · never sends</span>
-      </div>
-      <div class="lastoffer-preview hidden" id="lastoffer-preview" aria-live="polite">
-        <div class="lo-kicker">Last Offer · review only · preview stub</div>
-        <p class="lo-body" id="lastoffer-body"></p>
-        <button type="button" id="btn-lastoffer-stub" class="btn ghost">Preview Last Offer (stub)</button>
-      </div>
-      <div class="steps-nav">
-        <button type="button" id="btn-steps-prev" class="btn ghost">← Back</button>
-        <span id="steps-step-label" class="companion-step-label">1 / 17</span>
-        <button type="button" id="btn-steps-next" class="btn primary">Next →</button>
-      </div>
-      <div id="detail-extras" class="detail-extras hidden">
+      <div id="detail-extras" class="detail-extras">
         <div id="detail-header"></div>
         <div id="confidence-meter"></div>
         <div id="gate-controls" class="gate-controls hidden">
