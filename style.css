@@ -1300,6 +1300,7 @@ body:not(.jarvis-on) .live-motion { opacity: 0.2; }
   align-items: center;
   gap: 8px;
 }
+#command-center .command-nav .btn { flex: 0 0 auto; }
 #command-center .command-nav .btn.primary { margin-left: auto; }
 #command-center .dock-gate .btn { flex: 1; }
 #command-center #btn-show-steps { align-self: flex-start; opacity: 0.7; }
