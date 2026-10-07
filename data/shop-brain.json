@@ -1,14 +1,14 @@
 {
   "meta": {
     "title": "USA Wrap Co Control Deck",
-    "subtitle": "Vault HUD · next-step center · timeline map · hologram secondary · AI OFF · no live send",
+    "subtitle": "Vault HUD · next-step center · timeline map strip · hologram secondary · AI OFF · no live send",
     "date": "2026-10-07",
     "owner": "Chance Wallace",
     "mission": "Delco #1 Soft Ask (call? + email? blanks) · HOLD auto-send · 11 waiting Chance GO · outbound paused · AI OFF",
     "aiEngage": "off",
     "answerCalls": "off",
-    "controlSpec": "v0.9.3-clean",
-    "version": "0.9.3-clean",
+    "controlSpec": "v0.9.3-layout",
+    "version": "0.9.3-layout",
     "defaultJobId": "job-delco-pr0014",
     "delcoStallHours": 48,
     "jarvis": {

@@ -4,7 +4,7 @@ const FEEDBACK_KEY = "wrapShopControlDeckFeedback_v03";
 const STUB_TOAST_GO = "Queued for Chance — no live send";
 const STUB_TOAST_HOLD = "Parked — HOLD queued for Chance";
 const DATA_URL = "./data/shop-brain.json";
-const VERSION_TAG = "v0.9.3-clean";
+const VERSION_TAG = "v0.9.3-layout";
 const JARVIS_KEY = "wrapShopControlDeckJarvis_v09";
 const JARVIS_MUTE_KEY = "wrapShopControlDeckJarvisMute_v09";
 const BLANKS_KEY = "wrapShopControlDeckSoftAskBlanks_v092";
@@ -688,12 +688,13 @@ function renderTimelineRail() {
       }
     });
   });
-
   const mapSub = document.getElementById("map-sub");
   if (mapSub) {
     const active = steps[companionStep];
     mapSub.textContent = active?.branch === "journey" ? "Sales journey" : "Delco Soft Ask";
   }
+  const activeBtn = rail.querySelector(".tl-node.active");
+  if (activeBtn) rail.scrollLeft = Math.max(0, activeBtn.offsetLeft - 28);
 }
 
 function syncSoftAskBlanksUI() {

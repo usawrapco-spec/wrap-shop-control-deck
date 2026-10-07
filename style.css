@@ -40,12 +40,13 @@ html, body {
 #app {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: var(--top-h) auto 1fr;
+  grid-template-columns: minmax(200px, 28%) minmax(0, 1fr);
+  grid-template-rows: var(--top-h) minmax(0, 1fr) auto auto;
   grid-template-areas:
-    "top"
-    "chrome"
-    "work";
+    "top top"
+    "stage step"
+    "timeline timeline"
+    "dock dock";
   height: 100%;
   min-height: 100dvh;
 }
@@ -1162,6 +1163,8 @@ body:not(.jarvis-on) .live-motion { opacity: 0.2; }
 
 #tooltip.hidden { display: none; }
 
+.hidden { display: none !important; }
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -1241,4 +1244,198 @@ body:not(.jarvis-on) .live-motion { opacity: 0.2; }
   .ai-off-sub { display: none; }
   .command-card { padding: 12px; }
   .btn.big { padding: 10px 14px; font-size: 0.75rem; }
+}
+
+/* ——— v0.9.3-layout: step owns the screen, map is a strip, hologram stays quiet ——— */
+.mission-chip { display: none; }
+
+#holo-stage { grid-area: stage; }
+#command-center {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  transform: none;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  grid-area: step;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  pointer-events: auto;
+  padding: 14px 16px 12px;
+  background: rgba(8, 10, 12, 0.96);
+  border-left: 1px solid var(--line);
+}
+#command-center .command-card {
+  flex: 1;
+  min-height: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  backdrop-filter: none;
+  padding: 0;
+}
+#command-center .next-action {
+  font-size: 1.35rem;
+  line-height: 1.25;
+  font-weight: 700;
+}
+#command-center .cb-body {
+  font-size: 1.05rem;
+  line-height: 1.45;
+  color: var(--ink);
+}
+#command-center .job-synopsis { display: block; }
+#command-center .synopsis-body {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+  font-size: 0.85rem;
+  color: var(--ink);
+}
+#command-center .command-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#command-center .command-nav .btn.primary { margin-left: auto; }
+#command-center .dock-gate .btn { flex: 1; }
+#command-center #btn-show-steps { align-self: flex-start; opacity: 0.7; }
+
+#timeline-map {
+  grid-area: timeline;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 6px 12px;
+  border-right: 0;
+  border-top: 1px solid var(--line);
+  overflow: hidden;
+}
+#timeline-map .map-head {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+  flex-shrink: 0;
+  border-bottom: 0;
+  padding: 0;
+}
+#timeline-map .timeline-rail {
+  position: relative;
+  flex-direction: row;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  max-height: none;
+  margin: 0;
+  padding: 2px 0;
+  border-left: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: 4px;
+}
+#timeline-map .tl-node {
+  width: auto;
+  flex: 0 0 auto;
+  max-width: 140px;
+  padding: 4px 8px;
+}
+#timeline-map .tl-label {
+  max-width: 112px;
+  display: block;
+  -webkit-line-clamp: unset;
+  white-space: nowrap;
+}
+
+#simple-dock {
+  grid-area: dock;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  padding: 8px 14px 10px;
+  background: linear-gradient(0deg, #080a0c 0%, #0a0c0e 100%);
+  border-top: 1px solid var(--line);
+  z-index: 5;
+}
+.hot-card {
+  appearance: none;
+  text-align: left;
+  border: 1px solid var(--line-strong);
+  background: linear-gradient(135deg, rgba(126, 200, 227, 0.1), rgba(12, 14, 16, 0.95));
+  color: inherit;
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+.hot-kicker {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  color: var(--cyan);
+  text-transform: uppercase;
+}
+.hot-title { font-size: 1rem; font-weight: 700; }
+.hot-sub { font-size: 0.75rem; color: var(--ink-dim); }
+
+.holo-hud {
+  max-width: min(240px, 92%);
+  gap: 4px;
+  pointer-events: none;
+}
+.stage-tools,
+.stage-tools summary,
+.holo-hud .holo-controls,
+.holo-hud .btn,
+.holo-hud .ops-meters {
+  pointer-events: auto;
+}
+.live-motion { opacity: 0.32; }
+.stage-tools { margin-top: 4px; }
+.stage-tools summary {
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  list-style: none;
+}
+.stage-tools summary::-webkit-details-marker { display: none; }
+.stage-tools[open] summary { color: var(--cyan); margin-bottom: 8px; }
+.stage-tools .ops-meters { margin: 8px 0; }
+.stage-tools .holo-controls { display: flex; flex-wrap: wrap; gap: 6px; }
+
+#top-bar,
+#holo-stage,
+#command-center,
+#timeline-map,
+#simple-dock {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  #app {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(120px, 20vh) minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "top"
+      "stage"
+      "step"
+      "timeline"
+      "dock";
+  }
+  #top-bar { flex-wrap: wrap; gap: 6px; padding: 6px 10px; }
+  .brand { min-width: 0; flex: 1 1 140px; }
+  .ai-off-sub { display: none; }
+  #command-center { border-left: 0; border-top: 1px solid var(--line); }
+  .holo-hud { display: flex; max-width: calc(100% - 20px); }
+  #timeline-map { flex-wrap: nowrap; }
 }
