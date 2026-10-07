@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Control Deck v0.3 — USA Wrap Co + DekWave</title>
+  <title>Control Deck v0.4-simple — USA Wrap Co</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -16,83 +16,103 @@
         <span class="logo-orb" aria-hidden="true"></span>
         <div>
           <h1>Control Deck</h1>
-          <p class="tagline">Jarvis companion · Grok + Wrapstart · v0.3</p>
+          <p class="tagline">v0.4-simple · AI OFF · no live send</p>
         </div>
       </div>
-      <div class="mission-chip" id="mission-chip" title="Shop mission">Loading mission…</div>
+      <div class="mission-chip" id="mission-chip" title="Shop mission">Loading…</div>
       <div class="top-actions">
         <div id="ai-off-badge" class="ai-off-badge" title="Engage OFF · Answer calls Off · hardcoded — never wire live AI ON">
           AI OFF
           <span class="ai-off-sub">Engage OFF · Answer Off</span>
         </div>
-        <button type="button" id="btn-mic" class="btn mic" title="voice coming" disabled aria-disabled="true">
-          🎤 <span class="mic-label">voice coming</span>
-        </button>
-        <button type="button" id="btn-future" class="btn ghost" title="Future roadmap">🚀 Future</button>
-        <button type="button" id="btn-reset-cam" class="btn ghost" title="Reset camera">⟲ Cam</button>
-        <button type="button" id="btn-export" class="btn primary">⬇ Export feedback JSON</button>
+        <button type="button" id="btn-more" class="btn ghost" title="Lanes, rules, future">More</button>
       </div>
     </header>
 
-    <aside id="lanes-panel" aria-label="Three lanes">
-      <h2>Three Lanes</h2>
-      <div id="lanes-list"></div>
-      <h2 class="rules-heading">Hard Rules</h2>
-      <ul id="rules-list"></ul>
-    </aside>
-
     <main id="stage-wrap">
       <canvas id="c"></canvas>
-      <div id="hud-hint">Drag to orbit · Scroll to zoom · Delco pre-opened · AI stays OFF · no live send</div>
-      <div id="flow-strip" aria-label="Lead flow"></div>
+      <div id="hud-hint">Drag to orbit · Delco ready · AI OFF</div>
     </main>
 
-    <aside id="detail-panel" class="hidden" aria-live="polite">
-      <button type="button" id="btn-close-detail" class="btn-icon" title="Close">✕</button>
-      <div id="detail-header"></div>
-      <div id="confidence-meter"></div>
-      <div id="gate-controls" class="gate-controls hidden">
-        <button type="button" id="btn-go" class="btn go" title="Stub — no live send">▶ GO</button>
-        <button type="button" id="btn-hold" class="btn hold" title="Stub — park only">⏸ HOLD</button>
-      </div>
-      <h3>Think Path</h3>
-      <p class="hint-sm">Tap a glowing step to leave feedback for Chance.</p>
-      <ol id="think-path"></ol>
-    </aside>
+    <section id="simple-dock" aria-label="What to do now">
+      <button type="button" id="hot-card" class="hot-card" title="Focus Delco">
+        <span class="hot-kicker">What’s hot</span>
+        <span class="hot-title" id="hot-title">Delco PR-0014</span>
+        <span class="hot-sub" id="hot-sub">Close prep · not sent</span>
+      </button>
 
-    <aside id="companion-panel" aria-label="Grok thinking companion">
-      <div class="companion-head">
-        <div class="companion-avatar" aria-hidden="true">🧠</div>
-        <div>
-          <h2>Grok thinking</h2>
-          <p class="companion-sub">Delco close companion · UI only tonight</p>
-        </div>
-        <span class="companion-live">script</span>
+      <div class="next-card">
+        <span class="next-kicker">What to do next</span>
+        <p class="next-action" id="next-action">Loading…</p>
+        <button type="button" id="btn-show-steps" class="link-btn" aria-expanded="false">Show steps</button>
+      </div>
+
+      <div class="dock-gate">
+        <button type="button" id="btn-comp-go" class="btn go big" title="Stub — no live send">▶ GO</button>
+        <button type="button" id="btn-comp-hold" class="btn hold big" title="Stub — park only">⏸ HOLD</button>
+      </div>
+    </section>
+
+    <aside id="steps-panel" class="hidden" aria-label="Steps" aria-live="polite">
+      <div class="steps-head">
+        <h2>Steps</h2>
+        <button type="button" id="btn-hide-steps" class="btn-icon" title="Hide steps">✕</button>
       </div>
       <div id="companion-feed" class="companion-feed"></div>
-      <div class="companion-nav">
-        <button type="button" id="btn-comp-prev" class="btn ghost" title="Previous step">← Back</button>
+      <div class="steps-nav">
+        <button type="button" id="btn-comp-prev" class="btn ghost">← Back</button>
         <span id="companion-step-label" class="companion-step-label">1 / 4</span>
-        <button type="button" id="btn-comp-next" class="btn primary" title="Next step">Next →</button>
+        <button type="button" id="btn-comp-next" class="btn primary">Next →</button>
       </div>
-      <div class="companion-gate">
-        <button type="button" id="btn-comp-go" class="btn go" title="Stub — no live send">▶ GO Soft Ask</button>
-        <button type="button" id="btn-comp-hold" class="btn hold" title="Stub — park only">⏸ HOLD</button>
+      <div id="detail-extras" class="detail-extras hidden">
+        <div id="detail-header"></div>
+        <div id="confidence-meter"></div>
+        <div id="gate-controls" class="gate-controls hidden">
+          <button type="button" id="btn-go" class="btn go" title="Stub — no live send">▶ GO</button>
+          <button type="button" id="btn-hold" class="btn hold" title="Stub — park only">⏸ HOLD</button>
+        </div>
+        <h3>Think path</h3>
+        <ol id="think-path"></ol>
       </div>
-      <p class="companion-foot">No Wrapstart API · no email/SMS · AI OFF</p>
+      <button type="button" id="btn-toggle-detail" class="link-btn">Show job details</button>
+    </aside>
+
+    <aside id="more-drawer" class="hidden" aria-label="More" aria-live="polite">
+      <div class="more-head">
+        <h2>More</h2>
+        <button type="button" id="btn-close-more" class="btn-icon" title="Close">✕</button>
+      </div>
+      <div class="more-actions">
+        <button type="button" id="btn-reset-cam" class="btn ghost">⟲ Reset camera</button>
+        <button type="button" id="btn-export" class="btn ghost">⬇ Export feedback</button>
+        <button type="button" id="btn-mic" class="btn mic" title="voice coming" disabled aria-disabled="true">🎤 voice coming</button>
+      </div>
+      <h3>Three lanes</h3>
+      <div id="lanes-list"></div>
+      <h3>Hard rules</h3>
+      <div id="rules-list" class="rules-chips" role="list"></div>
+      <h3>Future</h3>
+      <div id="future-cards"></div>
+      <p class="more-foot">Flow: <span id="flow-strip"></span></p>
+    </aside>
+
+    <!-- kept for JS compatibility; not shown as a side panel -->
+    <aside id="detail-panel" class="sr-only" aria-hidden="true"></aside>
+    <aside id="lanes-panel" class="sr-only" aria-hidden="true"><h2 class="rules-heading">Hard Rules</h2></aside>
+    <aside id="companion-panel" class="sr-only" aria-hidden="true">
+      <div class="companion-head"><div class="companion-avatar">🧠</div><h2>Grok</h2><span class="companion-live">script</span></div>
+      <p class="companion-sub"></p>
+      <p class="companion-foot"></p>
+      <div class="companion-nav"></div>
+      <div class="companion-gate"></div>
+    </aside>
+    <aside id="future-panel" class="hidden" aria-hidden="true">
+      <button type="button" id="btn-close-future" class="btn-icon" title="Close">✕</button>
+      <div class="future-head"><h2>Future</h2><p class="hint-sm"></p></div>
+      <p class="future-foot"></p>
     </aside>
 
     <div id="tooltip" class="hidden"></div>
-
-    <aside id="future-panel" class="hidden" aria-label="Future roadmap" aria-live="polite">
-      <button type="button" id="btn-close-future" class="btn-icon" title="Close">✕</button>
-      <div class="future-head">
-        <h2>🚀 Future cockpit</h2>
-        <p class="hint-sm">Custom control app = cockpit. Wrapstart = hands. AI OFF until Chance GO.</p>
-      </div>
-      <div id="future-cards"></div>
-      <p class="future-foot">Docs: <code>wrap-shop-control-future-2026-10-06/</code></p>
-    </aside>
 
     <div id="feedback-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="fb-title">
       <div class="modal-card">

@@ -470,17 +470,29 @@ function buildScene() {
   }
 }
 
+function shortMission(m) {
+  // First-screen mission: one calm line, no jargon dump
+  const raw = String(m || "");
+  if (raw.length <= 72) return raw;
+  const cut = raw.slice(0, 72);
+  const sp = cut.lastIndexOf(" ");
+  return (sp > 40 ? cut.slice(0, sp) : cut) + "…";
+}
+
 function populateUI() {
-  document.getElementById("mission-chip").textContent = "🎯 " + shopData.meta.mission;
+  const mission = shopData.meta.mission || "Kind + profitable. Soft Ask. AI OFF.";
+  document.getElementById("mission-chip").textContent = "🎯 " + shortMission(mission);
+  document.getElementById("mission-chip").title = mission;
 
   const lanesList = document.getElementById("lanes-list");
   lanesList.innerHTML = "";
+  const laneEmoji = { "lane-a": "📞", "lane-b": "🧠", "lane-c": "👥" };
   for (const lane of shopData.lanes) {
     const card = document.createElement("div");
     card.className = "lane-card";
     card.style.setProperty("--lane-color", lane.color);
     card.innerHTML = `
-      <h3>${lane.name}</h3>
+      <h3>${laneEmoji[lane.id] || "•"} ${lane.name}</h3>
       <p>${lane.summary}</p>
       <div class="roles">${lane.roles.map((r) => `<span class="role-pill">${r}</span>`).join("")}</div>
     `;
@@ -490,16 +502,22 @@ function populateUI() {
   const rulesList = document.getElementById("rules-list");
   rulesList.innerHTML = "";
   for (const rule of shopData.hardRules) {
-    const li = document.createElement("li");
-    li.innerHTML = `<strong>${rule.title}</strong>${rule.detail}`;
-    rulesList.appendChild(li);
+    const chip = document.createElement("span");
+    chip.className = "rule-chip";
+    chip.setAttribute("role", "listitem");
+    chip.textContent = rule.title;
+    chip.title = rule.detail;
+    rulesList.appendChild(chip);
   }
 
   const flow = document.getElementById("flow-strip");
-  flow.innerHTML = shopData.leadFlow.map((s) => `<span class="flow-step">${s}</span>`).join("");
+  if (flow) {
+    flow.innerHTML = (shopData.leadFlow || []).map((s) => `<span class="flow-step">${s}</span>`).join("");
+  }
 
   populateFutureCards();
   syncAiOffBadge();
+  syncHotCard(null);
 }
 
 function populateFutureCards() {
@@ -521,18 +539,16 @@ function populateFutureCards() {
 function syncAiOffBadge() {
   const badge = document.getElementById("ai-off-badge");
   if (!badge) return;
-  // v0.3 HARDCODED OFF — never wire live AI ON from this deck
+  // v0.4-simple HARDCODED OFF — never wire live AI ON from this deck
   badge.innerHTML = 'AI OFF<span class="ai-off-sub">Engage OFF · Answer Off</span>';
   badge.title = "Engage OFF · Answer calls Off · hardcoded — never wire live AI ON";
   badge.style.background = "linear-gradient(135deg, #c0392b, #ff7675)";
 }
 
 function openFuturePanel() {
-  const panel = document.getElementById("future-panel");
-  if (!panel) return;
   populateFutureCards();
-  panel.classList.remove("hidden");
-  showToast("Future deck — AI stays OFF");
+  setMoreOpen(true);
+  showToast("Future is under More — AI stays OFF");
 }
 
 function closeFuturePanel() {
@@ -556,12 +572,57 @@ function getFeedbackForStep(jobId, stepId) {
   return feedbackStore.filter((f) => f.jobId === jobId && f.stepId === stepId);
 }
 
+function plainStatus(job) {
+  const s = job.status || "";
+  if (s === "close-prep") return "Close prep · not sent";
+  if (s === "ready") return "Ready · waiting on you";
+  if (s === "pending-send") return "Waiting send · your call";
+  if (s === "hold") return "On hold";
+  if (s === "active") return "Active Soft Ask";
+  if (s === "practice") return "Practice only";
+  return s.replace(/-/g, " ") || "In shop";
+}
+
+function syncHotCard(job) {
+  const titleEl = document.getElementById("hot-title");
+  const subEl = document.getElementById("hot-sub");
+  if (!titleEl || !subEl) return;
+  const j = job || (shopData && shopData.jobs.find((x) => x.id === ((shopData.meta && shopData.meta.defaultJobId) || "job-delco-pr0014")));
+  if (!j) {
+    titleEl.textContent = "No hot job";
+    subEl.textContent = "Pick a van on the map";
+    return;
+  }
+  const short = (j.title || "").split("—")[0].trim() || j.title;
+  const prop = j.wrapstart && j.wrapstart.proposalId ? ` ${j.wrapstart.proposalId}` : "";
+  titleEl.textContent = short.includes("Delco") ? `Delco${prop || " PR-0014"}` : short;
+  subEl.textContent = plainStatus(j);
+}
+
+function nextActionPlain(stepIndex) {
+  const lines = [
+    "Next: Soft Ask Delco — call + proposal. Not sent yet.",
+    "Next: You decide — GO to send Soft Ask, or HOLD.",
+    "Next: GO is practice only tonight. Real send stays in Wrapstart.",
+    "Next: After they accept — take 50% deposit, then design.",
+  ];
+  const i = Math.max(0, Math.min(stepIndex || 0, lines.length - 1));
+  return lines[i];
+}
+
+function syncNextAction() {
+  const el = document.getElementById("next-action");
+  if (el) el.textContent = nextActionPlain(companionStep);
+}
+
 function openJob(job) {
   activeJob = job;
-  detailPanel.classList.remove("hidden");
+  if (detailPanel) detailPanel.classList.remove("hidden");
+  syncHotCard(job);
 
   const ws = job.wrapstart || {};
   const pricing = job.pricing || null;
+  // Jargon (pretax, ids, status chips) only in expanded details — not first screen
   const pricingHtml = pricing
     ? `<div class="pricing-chips">
         <span class="pricing-chip">Fixed $${Number(pricing.fixedPretax).toLocaleString()} pretax</span>
@@ -574,24 +635,28 @@ function openJob(job) {
       }${ws.company ? ` · ${escapeHtml(ws.company)}` : ""}</p>`
     : "";
 
-  detailHeader.innerHTML = `
-    <div class="job-title">${escapeHtml(job.title)}</div>
-    <div class="job-meta">
-      <span class="badge status-${escapeHtml(job.status)}">${escapeHtml(job.status)}</span>
-      <span class="badge type-${escapeHtml(job.type)}">${escapeHtml(job.type)}</span>
-      <span class="badge">${escapeHtml(job.vehicle)}</span>
-    </div>
-    ${idsHtml}
-    ${pricingHtml}
-    <p class="summary">${escapeHtml(job.summary)}</p>
-  `;
+  if (detailHeader) {
+    detailHeader.innerHTML = `
+      <div class="job-title">${escapeHtml(job.title)}</div>
+      <div class="job-meta">
+        <span class="badge status-${escapeHtml(job.status)}">${escapeHtml(job.status)}</span>
+        <span class="badge type-${escapeHtml(job.type)}">${escapeHtml(job.type)}</span>
+        <span class="badge">${escapeHtml(job.vehicle)}</span>
+      </div>
+      ${idsHtml}
+      ${pricingHtml}
+      <p class="summary">${escapeHtml(job.summary)}</p>
+    `;
+  }
 
   const cc = confClass(job.confidenceOverall);
-  confidenceMeter.innerHTML = `
-    <div class="cm-label">Grok confidence (overall)</div>
-    <div class="cm-bar"><div class="cm-fill ${cc}"></div></div>
-    <div class="cm-text ${cc}">${confLabel(job.confidenceOverall)}</div>
-  `;
+  if (confidenceMeter) {
+    confidenceMeter.innerHTML = `
+      <div class="cm-label">Grok confidence</div>
+      <div class="cm-bar"><div class="cm-fill ${cc}"></div></div>
+      <div class="cm-text ${cc}">${confLabel(job.confidenceOverall)}</div>
+    `;
+  }
 
   const gate = document.getElementById("gate-controls");
   if (gate) {
@@ -599,24 +664,27 @@ function openJob(job) {
     gate.classList.toggle("hidden", !showGate);
   }
 
-  thinkPathEl.innerHTML = "";
-  for (const step of job.thinkPath) {
-    const li = document.createElement("li");
-    const fbs = getFeedbackForStep(job.id, step.id);
-    if (fbs.length) li.classList.add("has-feedback");
-    li.innerHTML = `
-      <div class="step-label">${escapeHtml(step.label)}</div>
-      <div class="step-detail">${escapeHtml(step.detail)}</div>
-      <span class="step-conf ${confClass(step.confidence)}">${escapeHtml(step.confidence)} · ${escapeHtml(step.stage)}</span>
-      ${fbs.map((f) => `<div class="fb-preview">💬 ${escapeHtml(f.text)}</div>`).join("")}
-    `;
-    li.addEventListener("click", () => openFeedbackModal(job, step));
-    thinkPathEl.appendChild(li);
+  if (thinkPathEl) {
+    thinkPathEl.innerHTML = "";
+    for (const step of job.thinkPath || []) {
+      const li = document.createElement("li");
+      const fbs = getFeedbackForStep(job.id, step.id);
+      if (fbs.length) li.classList.add("has-feedback");
+      li.innerHTML = `
+        <div class="step-label">${escapeHtml(step.label)}</div>
+        <div class="step-detail">${escapeHtml(step.detail)}</div>
+        <span class="step-conf ${confClass(step.confidence)}">${escapeHtml(step.confidence)} · ${escapeHtml(step.stage)}</span>
+        ${fbs.map((f) => `<div class="fb-preview">💬 ${escapeHtml(f.text)}</div>`).join("")}
+      `;
+      li.addEventListener("click", () => openFeedbackModal(job, step));
+      thinkPathEl.appendChild(li);
+    }
   }
 
   if (job.id === "job-delco-pr0014" || (job.wrapstart && job.wrapstart.proposalId === "PR-0014")) {
     renderCompanion(true);
   }
+  syncNextAction();
 }
 
 function escapeHtml(s) {
@@ -755,26 +823,35 @@ canvas.addEventListener("pointerup", (e) => {
   }
 });
 
-document.getElementById("btn-close-detail").addEventListener("click", () => {
-  detailPanel.classList.add("hidden");
-  activeJob = null;
-  detailHeader.innerHTML = "";
-  confidenceMeter.innerHTML = "";
-  thinkPathEl.innerHTML = "";
-  const gate = document.getElementById("gate-controls");
-  if (gate) gate.classList.add("hidden");
-});
+const btnCloseDetail = document.getElementById("btn-close-detail");
+if (btnCloseDetail) {
+  btnCloseDetail.addEventListener("click", () => {
+    if (detailPanel) detailPanel.classList.add("hidden");
+    activeJob = null;
+    if (detailHeader) detailHeader.innerHTML = "";
+    if (confidenceMeter) confidenceMeter.innerHTML = "";
+    if (thinkPathEl) thinkPathEl.innerHTML = "";
+    const gate = document.getElementById("gate-controls");
+    if (gate) gate.classList.add("hidden");
+  });
+}
 
-document.getElementById("btn-export").addEventListener("click", exportFeedback);
-document.getElementById("btn-future").addEventListener("click", openFuturePanel);
-document.getElementById("btn-close-future").addEventListener("click", closeFuturePanel);
+const btnExport = document.getElementById("btn-export");
+if (btnExport) btnExport.addEventListener("click", exportFeedback);
+const btnFuture = document.getElementById("btn-future");
+if (btnFuture) btnFuture.addEventListener("click", openFuturePanel);
+const btnCloseFuture = document.getElementById("btn-close-future");
+if (btnCloseFuture) btnCloseFuture.addEventListener("click", closeFuturePanel);
 document.getElementById("ai-off-badge").addEventListener("click", () => {
   showToast("AI OFF locked — Engage OFF · Answer Off · never ON from deck");
 });
-document.getElementById("btn-reset-cam").addEventListener("click", () => {
-  camera.position.set(18, 22, 28);
-  controls.target.set(0, 1, 2);
-});
+const btnResetCam = document.getElementById("btn-reset-cam");
+if (btnResetCam) {
+  btnResetCam.addEventListener("click", () => {
+    camera.position.set(18, 22, 28);
+    controls.target.set(0, 1, 2);
+  });
+}
 document.getElementById("fb-cancel").addEventListener("click", closeFeedbackModal);
 document.getElementById("fb-save").addEventListener("click", () => {
   const jobRef = activeStep?.job;
@@ -804,6 +881,8 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") {
     closeFeedbackModal();
     closeFuturePanel();
+    setMoreOpen(false);
+    setStepsOpen(false);
   }
 });
 
@@ -852,6 +931,7 @@ function renderCompanion(keepStep) {
   const steps = getCompanionSteps();
   if (!steps.length) {
     feed.innerHTML = '<p class="hint-sm">No companion script loaded.</p>';
+    syncNextAction();
     return;
   }
   if (!keepStep) {
@@ -861,32 +941,19 @@ function renderCompanion(keepStep) {
   companionStep = Math.max(0, Math.min(companionStep, steps.length - 1));
   companionRevealed = Math.max(companionRevealed, companionStep);
 
-  feed.innerHTML = steps
-    .map((s, i) => {
-      const revealed = i <= companionRevealed;
-      const active = i === companionStep;
-      return `<article class="companion-bubble tone-${escapeHtml(s.tone || "")} ${
-        revealed ? "revealed" : ""
-      } ${active ? "active" : ""}" data-idx="${i}">
-        <div class="cb-title">${escapeHtml(s.title)}</div>
-        <p class="cb-body">${revealed ? escapeHtml(s.body) : "…"}</p>
-      </article>`;
-    })
-    .join("");
-
-  feed.querySelectorAll(".companion-bubble").forEach((el) => {
-    el.addEventListener("click", () => {
-      companionStep = Number(el.dataset.idx);
-      companionRevealed = Math.max(companionRevealed, companionStep);
-      renderCompanion(true);
-    });
-  });
+  // Simple mode: show ONLY the active step; collapse the rest behind a hint
+  const s = steps[companionStep];
+  const more = steps.length - 1;
+  feed.innerHTML = `
+    <article class="companion-bubble tone-${escapeHtml(s.tone || "")} revealed active" data-idx="${companionStep}">
+      <div class="cb-title">${escapeHtml(s.title)}</div>
+      <p class="cb-body">${escapeHtml(s.body)}</p>
+    </article>
+    ${more > 0 ? `<div class="companion-bubble collapsed-hint">${more} more step${more === 1 ? "" : "s"} — use Next / Back</div>` : ""}
+  `;
 
   if (label) label.textContent = `${companionStep + 1} / ${steps.length}`;
-
-  // Auto-scroll active into view
-  const activeEl = feed.querySelector(".companion-bubble.active");
-  if (activeEl) activeEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  syncNextAction();
 }
 
 function companionNext() {
@@ -931,6 +998,71 @@ function wireCompanionControls() {
   }
 }
 
+function setStepsOpen(open) {
+  const panel = document.getElementById("steps-panel");
+  const btn = document.getElementById("btn-show-steps");
+  if (!panel) return;
+  panel.classList.toggle("hidden", !open);
+  if (btn) {
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    btn.textContent = open ? "Hide steps" : "Show steps";
+  }
+  if (open) renderCompanion(true);
+}
+
+function setMoreOpen(open) {
+  const drawer = document.getElementById("more-drawer");
+  if (drawer) drawer.classList.toggle("hidden", !open);
+}
+
+function setDetailExtrasOpen(open) {
+  const extras = document.getElementById("detail-extras");
+  const btn = document.getElementById("btn-toggle-detail");
+  if (extras) extras.classList.toggle("hidden", !open);
+  if (btn) btn.textContent = open ? "Hide job details" : "Show job details";
+}
+
+function wireSimpleUi() {
+  const showSteps = document.getElementById("btn-show-steps");
+  const hideSteps = document.getElementById("btn-hide-steps");
+  const more = document.getElementById("btn-more");
+  const closeMore = document.getElementById("btn-close-more");
+  const hot = document.getElementById("hot-card");
+  const toggleDetail = document.getElementById("btn-toggle-detail");
+
+  if (showSteps) {
+    showSteps.addEventListener("click", () => {
+      const open = document.getElementById("steps-panel")?.classList.contains("hidden");
+      setStepsOpen(!!open);
+    });
+  }
+  if (hideSteps) hideSteps.addEventListener("click", () => setStepsOpen(false));
+  if (more) more.addEventListener("click", () => setMoreOpen(true));
+  if (closeMore) closeMore.addEventListener("click", () => setMoreOpen(false));
+  if (toggleDetail) {
+    toggleDetail.addEventListener("click", () => {
+      const extras = document.getElementById("detail-extras");
+      const open = extras?.classList.contains("hidden");
+      setDetailExtrasOpen(!!open);
+    });
+  }
+  if (hot) {
+    hot.addEventListener("click", () => {
+      const defaultId = (shopData.meta && shopData.meta.defaultJobId) || "job-delco-pr0014";
+      const job = shopData.jobs.find((j) => j.id === defaultId) || shopData.jobs.find((j) => j.id.includes("delco"));
+      if (job) {
+        openJob(job);
+        const target = clickables.find((g) => g.userData.kind === "job" && g.userData.id === job.id);
+        if (target) {
+          controls.target.lerp(target.position.clone().setY(1), 0.85);
+          camera.position.lerp(new THREE.Vector3(14, 16, 18), 0.35);
+        }
+        showToast("Delco focused");
+      }
+    });
+  }
+}
+
 function focusDelcoOnLoad() {
   const defaultId = (shopData.meta && shopData.meta.defaultJobId) || "job-delco-pr0014";
   const job = shopData.jobs.find((j) => j.id === defaultId) || shopData.jobs.find((j) => j.id.includes("delco"));
@@ -959,12 +1091,15 @@ async function main() {
   populateUI();
   buildScene();
   wireCompanionControls();
+  wireSimpleUi();
   renderCompanion(false);
   resize();
-  detailPanel.classList.add("hidden");
+  if (detailPanel) detailPanel.classList.add("hidden");
+  setStepsOpen(false);
+  setDetailExtrasOpen(false);
   animate();
   focusDelcoOnLoad();
-  showToast("Control Deck v0.3 — Delco PR-0014 ready · AI OFF · no live send");
+  showToast("Control Deck v0.4-simple — Delco ready · AI OFF · no live send");
 }
 
 main();

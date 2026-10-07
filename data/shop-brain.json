@@ -1,14 +1,14 @@
 {
   "meta": {
     "title": "USA Wrap Co Control Deck",
-    "subtitle": "Jarvis companion · Grok thinking beside Wrapstart",
+    "subtitle": "Simple companion \u00b7 Grok thinking beside Wrapstart",
     "date": "2026-10-06",
     "owner": "Chance Wallace",
-    "mission": "Kind + profitable. Quality, not cheapest. Soft Ask. Full scope = better deal. Delco close companion — AI OFF · no live send.",
+    "mission": "Kind + profitable. Quality, not cheapest. Soft Ask. Full scope = better deal. Delco close companion \u2014 AI OFF \u00b7 no live send.",
     "aiEngage": "off",
     "answerCalls": "off",
-    "controlSpec": "v0.3",
-    "version": "0.3",
+    "controlSpec": "v0.4-simple",
+    "version": "0.4-simple",
     "defaultJobId": "job-delco-pr0014"
   },
   "lanes": [
@@ -17,111 +17,166 @@
       "name": "Wrapstart Front Desk",
       "color": "#5ec8ff",
       "summary": "Receptionist + Lead Agent stay OFF until Chance says GO. Captures forms, parks leads, never auto-engages customers.",
-      "roles": ["Wrapstart Receptionist", "Lead Agent (OFF until GO)"]
+      "roles": [
+        "Wrapstart Receptionist",
+        "Lead Agent (OFF until GO)"
+      ]
     },
     {
       "id": "lane-b",
       "name": "Grok Bot Hub",
       "color": "#ff9f43",
       "summary": "Back-office brain: scrub proposals, Margin Guard, draft Soft Asks, route jobs, keep rules. Never sends without Chance.",
-      "roles": ["Grok Bot", "Margin Guard", "Proposal Scrub"]
+      "roles": [
+        "Grok Bot",
+        "Margin Guard",
+        "Proposal Scrub"
+      ]
     },
     {
       "id": "lane-c",
       "name": "Human Crew",
       "color": "#7bed9f",
-      "summary": "Josh Soft Ask outbound. Corey outbound-only. Chance is the send gate — nothing customer-facing leaves without him.",
-      "roles": ["Josh (Soft Ask outbound)", "Corey (outbound-only)", "Chance (SEND gate)"]
+      "summary": "Josh Soft Ask outbound. Corey outbound-only. Chance is the send gate \u2014 nothing customer-facing leaves without him.",
+      "roles": [
+        "Josh (Soft Ask outbound)",
+        "Corey (outbound-only)",
+        "Chance (SEND gate)"
+      ]
     }
   ],
   "stations": [
     {
       "id": "front-desk",
       "name": "Front Desk",
-      "emoji": "🛎️",
+      "emoji": "\ud83d\udece\ufe0f",
       "color": "#5ec8ff",
-      "position": [-18, 0, 0],
+      "position": [
+        -18,
+        0,
+        0
+      ],
       "blurb": "Wrapstart Receptionist greets forms. AI Engage locked until GO."
     },
     {
       "id": "lead-lake",
       "name": "Lead Lake",
-      "emoji": "🌊",
+      "emoji": "\ud83c\udf0a",
       "color": "#74b9ff",
-      "position": [-12, 0, -6],
+      "position": [
+        -12,
+        0,
+        -6
+      ],
       "blurb": "Inbound leads splash in. Sorted by wrap / upfit / DekWave."
     },
     {
       "id": "quote-forge",
       "name": "Quote Forge",
-      "emoji": "⚒️",
+      "emoji": "\u2692\ufe0f",
       "color": "#fdcb6e",
-      "position": [-4, 0, -8],
-      "blurb": "Ballpark → proposal. Soft Ask tone. Full scope = better deal."
+      "position": [
+        -4,
+        0,
+        -8
+      ],
+      "blurb": "Ballpark \u2192 proposal. Soft Ask tone. Full scope = better deal."
     },
     {
       "id": "margin-vault",
       "name": "Margin Vault",
-      "emoji": "🏦",
+      "emoji": "\ud83c\udfe6",
       "color": "#a29bfe",
-      "position": [4, 0, -6],
+      "position": [
+        4,
+        0,
+        -6
+      ],
       "blurb": "C+A all-in tax 8.2%. Margin pretax. Guard blocks thin deals."
     },
     {
       "id": "chance-gate",
       "name": "Chance Gate",
-      "emoji": "🚪",
+      "emoji": "\ud83d\udeaa",
       "color": "#ffeaa7",
-      "position": [10, 0, 0],
+      "position": [
+        10,
+        0,
+        0
+      ],
       "blurb": "Big glowing door. Chance alone hits SEND. Delco/MSA = Chance-only."
     },
     {
       "id": "deposit-safe",
       "name": "Deposit Safe",
-      "emoji": "🔐",
+      "emoji": "\ud83d\udd10",
       "color": "#55efc4",
-      "position": [14, 0, 6],
+      "position": [
+        14,
+        0,
+        6
+      ],
       "blurb": "50% deposit before design. No design work on a handshake."
     },
     {
       "id": "design-studio",
       "name": "Design Studio",
-      "emoji": "🎨",
+      "emoji": "\ud83c\udfa8",
       "color": "#fd79a8",
-      "position": [8, 0, 10],
+      "position": [
+        8,
+        0,
+        10
+      ],
       "blurb": "Art + templates after deposit clears."
     },
     {
       "id": "print-bay",
       "name": "Print Bay",
-      "emoji": "🖨️",
+      "emoji": "\ud83d\udda8\ufe0f",
       "color": "#e17055",
-      "position": [0, 0, 12],
+      "position": [
+        0,
+        0,
+        12
+      ],
       "blurb": "Production rolls. Wrap outside / upfit inside stay separate."
     },
     {
       "id": "install-bay",
       "name": "Install Bay",
-      "emoji": "🔧",
+      "emoji": "\ud83d\udd27",
       "color": "#00b894",
-      "position": [-8, 0, 10],
+      "position": [
+        -8,
+        0,
+        10
+      ],
       "blurb": "Install day. Quality over speed. Customer happy = referrals."
     },
     {
       "id": "dekwave-dock",
       "name": "DekWave Dock",
-      "emoji": "🚤",
+      "emoji": "\ud83d\udea4",
       "color": "#0984e3",
-      "position": [-16, 0, 6],
+      "position": [
+        -16,
+        0,
+        6
+      ],
       "blurb": "Boat decking lane. Separate brand, same kind rules."
     },
     {
       "id": "future-deck",
       "name": "Future Deck",
-      "emoji": "🚀",
+      "emoji": "\ud83d\ude80",
       "color": "#fd79a8",
-      "position": [16, 0, -2],
-      "blurb": "Where the cockpit is headed — tap for phase cards. AI stays OFF until Chance GO."
+      "position": [
+        16,
+        0,
+        -2
+      ],
+      "blurb": "Where the cockpit is headed \u2014 tap for phase cards. AI stays OFF until Chance GO."
     }
   ],
   "hardRules": [
@@ -139,7 +194,7 @@
     },
     {
       "id": "rule-margin",
-      "title": "C+A all-in tax 8.2% · margin pretax",
+      "title": "C+A all-in tax 8.2% \u00b7 margin pretax",
       "detail": "Quotes bake California + all-in tax at 8.2%. Margin math is pretax. Thin margin = HOLD.",
       "confidence": "high"
     },
@@ -164,12 +219,12 @@
     {
       "id": "rule-deposit",
       "title": "Deposit before design",
-      "detail": "Accept first → 50% deposit invoice → THEN design. Quotes carry no deposit line.",
+      "detail": "Accept first \u2192 50% deposit invoice \u2192 THEN design. Quotes carry no deposit line.",
       "confidence": "high"
     },
     {
       "id": "rule-phones",
-      "title": "Phones 358-8870 / 8941 / 5628 — no forward",
+      "title": "Phones 358-8870 / 8941 / 5628 \u2014 no forward",
       "detail": "Shop lines stay on the desk. Do not forward to cell or AI voice.",
       "confidence": "high"
     }
@@ -192,39 +247,39 @@
     {
       "id": "c1",
       "title": "Soft Ask draft ready",
-      "body": "PR-0014 Soft Ask draft is ready (no send). Warm call + link invite for Puneet — Fixed $29,807 / Folding $44,232 pretax. Grok holds the copy; you own the gate.",
+      "body": "PR-0014 Soft Ask draft is ready (no send). Warm call + link invite for Puneet \u2014 Fixed $29,807 / Folding $44,232 pretax. Grok holds the copy; you own the gate.",
       "tone": "ready"
     },
     {
       "id": "c2",
       "title": "Waiting Chance GO",
-      "body": "Waiting on your GO to send Soft Ask. Competitors (Knapheide + Adrian) already in play — stall clock ~48h since inbound. HOLD stays safe; GO is UI-only tonight.",
+      "body": "Waiting on your GO to send Soft Ask. Competitors (Knapheide + Adrian) already in play \u2014 stall clock ~48h since inbound. HOLD stays safe; GO is UI-only tonight.",
       "tone": "wait"
     },
     {
       "id": "c3",
-      "title": "On GO → Soft Ask (UI only)",
-      "body": "If you tap GO: Control Deck pretends Soft Ask sent — toast only. No Wrapstart API, no Gmail, no SMS. Real send stays in Wrapstart / your draft when you choose.",
+      "title": "On GO \u2192 Soft Ask (UI only)",
+      "body": "If you tap GO: Control Deck pretends Soft Ask sent \u2014 toast only. No Wrapstart API, no Gmail, no SMS. Real send stays in Wrapstart / your draft when you choose.",
       "tone": "gate"
     },
     {
       "id": "c4",
-      "title": "After accept → deposit path",
-      "body": "After customer accept → 50% deposit invoice (all-in). Quotes carry no deposit. Then Design Studio opens. Fixed ≈ $16,126 / Folding ≈ $23,930 deposit on all-in.",
+      "title": "After accept \u2192 deposit path",
+      "body": "After customer accept \u2192 50% deposit invoice (all-in). Quotes carry no deposit. Then Design Studio opens. Fixed \u2248 $16,126 / Folding \u2248 $23,930 deposit on all-in.",
       "tone": "deposit"
     }
   ],
   "jobs": [
     {
       "id": "job-delco-pr0014",
-      "title": "Delco PR-0014 — Fixed $29,807 / Folding $44,232",
+      "title": "Delco PR-0014 \u2014 Fixed $29,807 / Folding $44,232",
       "type": "upfit",
       "vehicle": "van",
       "station": "chance-gate",
       "lane": "lane-c",
       "status": "close-prep",
       "color": "#ffeaa7",
-      "summary": "Delco Transport · 3 BrightDrops starter for 25-van fleet. Proposal PR-0014 Draft. Fixed Steel $29,807 pretax (rec) · Folding $44,232 pretax. Soft Ask ready — Chance GO only. Accept → 50% deposit invoice (quotes carry no deposit). AI OFF.",
+      "summary": "Delco Transport \u00b7 3 BrightDrops starter for 25-van fleet. Proposal PR-0014 Draft. Fixed Steel $29,807 pretax (rec) \u00b7 Folding $44,232 pretax. Soft Ask ready \u2014 Chance GO only. Accept \u2192 50% deposit invoice (quotes carry no deposit). AI OFF.",
       "confidenceOverall": "medium",
       "pricing": {
         "fixedPretax": 29807,
@@ -247,42 +302,42 @@
         {
           "id": "delco-s1",
           "label": "Confirm PR-0014 packet",
-          "detail": "Draft proposal PR-0014 · BrightDrop 600×2 + 400×1 · Fixed Steel $29,807 pretax / Folding $44,232 pretax · 8.2% tax · valid to 2026-11-05. Scrubbed clean. sent_at=null.",
+          "detail": "Draft proposal PR-0014 \u00b7 BrightDrop 600\u00d72 + 400\u00d71 \u00b7 Fixed Steel $29,807 pretax / Folding $44,232 pretax \u00b7 8.2% tax \u00b7 valid to 2026-11-05. Scrubbed clean. sent_at=null.",
           "confidence": "high",
           "stage": "intake"
         },
         {
           "id": "delco-s2",
           "label": "Delco = Chance-only gate",
-          "detail": "Hard rule: Delco/MSA never auto-route. Josh Soft Ask OFF. AI Engage OFF. Only Chance talks to Puneet. Control Deck companion narrates — never sends.",
+          "detail": "Hard rule: Delco/MSA never auto-route. Josh Soft Ask OFF. AI Engage OFF. Only Chance talks to Puneet. Control Deck companion narrates \u2014 never sends.",
           "confidence": "high",
           "stage": "routing"
         },
         {
           "id": "delco-s3",
           "label": "Soft Ask draft (no send)",
-          "detail": "Warm Soft Ask: call + proposal link. Lead Fixed (recommended). Mention Folding as premium clear-floor. MSA lever for Chance only — don't dump every lever on first touch.",
+          "detail": "Warm Soft Ask: call + proposal link. Lead Fixed (recommended). Mention Folding as premium clear-floor. MSA lever for Chance only \u2014 don't dump every lever on first touch.",
           "confidence": "medium",
           "stage": "quote"
         },
         {
           "id": "delco-s4",
           "label": "Margin + options check",
-          "detail": "Fixed parts $25,230 + install 19.9h×$230=$4,577 → $29,807 pretax. Folding $37,769 + 28.1h×$230=$6,463 → $44,232. Margin pretax healthy. Wrap mention-only.",
+          "detail": "Fixed parts $25,230 + install 19.9h\u00d7$230=$4,577 \u2192 $29,807 pretax. Folding $37,769 + 28.1h\u00d7$230=$6,463 \u2192 $44,232. Margin pretax healthy. Wrap mention-only.",
           "confidence": "high",
           "stage": "margin"
         },
         {
           "id": "delco-s5",
           "label": "Chance GO / HOLD (stub tonight)",
-          "detail": "GO and HOLD buttons are visible but stubbed — toast \"Coming — no live send tonight\". Real send = Wrapstart Approve or paste Soft Ask yourself. Stall ~48h; competitors in play.",
+          "detail": "GO and HOLD buttons are visible but stubbed \u2014 toast \"Coming \u2014 no live send tonight\". Real send = Wrapstart Approve or paste Soft Ask yourself. Stall ~48h; competitors in play.",
           "confidence": "high",
           "stage": "gate"
         },
         {
           "id": "delco-s6",
-          "label": "Accept → 50% deposit invoice",
-          "detail": "deposit_required=false on quote. After accept → invoice 50% of all-in (Fixed ≈$16,126 / Folding ≈$23,930). THEN Design. No free art. No design on handshake.",
+          "label": "Accept \u2192 50% deposit invoice",
+          "detail": "deposit_required=false on quote. After accept \u2192 invoice 50% of all-in (Fixed \u2248$16,126 / Folding \u2248$23,930). THEN Design. No free art. No design on handshake.",
           "confidence": "high",
           "stage": "deposit"
         }
@@ -290,14 +345,14 @@
     },
     {
       "id": "job-transit-softask",
-      "title": "Inbound Transit wrap — Soft Ask",
+      "title": "Inbound Transit wrap \u2014 Soft Ask",
       "type": "wrap",
       "vehicle": "van",
       "station": "quote-forge",
       "lane": "lane-b",
       "status": "active",
       "color": "#fdcb6e",
-      "summary": "Fleet Transit just hit the form. Warm Soft Ask ballpark — kind, not pushy. Full-van scope beats a cheap partial.",
+      "summary": "Fleet Transit just hit the form. Warm Soft Ask ballpark \u2014 kind, not pushy. Full-van scope beats a cheap partial.",
       "confidenceOverall": "medium",
       "thinkPath": [
         {
@@ -310,7 +365,7 @@
         {
           "id": "j1-s2",
           "label": "Classify lane",
-          "detail": "Wrap outside → Wrapstart wrap lane. Not upfit, not DekWave. AI Engage still OFF.",
+          "detail": "Wrap outside \u2192 Wrapstart wrap lane. Not upfit, not DekWave. AI Engage still OFF.",
           "confidence": "high",
           "stage": "routing"
         },
@@ -324,7 +379,7 @@
         {
           "id": "j1-s4",
           "label": "Margin Guard check",
-          "detail": "Bake 8.2% all-in tax. Pretax margin band healthy? If thin → HOLD for Chance.",
+          "detail": "Bake 8.2% all-in tax. Pretax margin band healthy? If thin \u2192 HOLD for Chance.",
           "confidence": "high",
           "stage": "margin"
         },
@@ -380,7 +435,7 @@
         {
           "id": "j3-s5",
           "label": "Chance SEND then Dock",
-          "detail": "Proposal through Chance Gate. After accept + deposit → design → install at marina.",
+          "detail": "Proposal through Chance Gate. After accept + deposit \u2192 design \u2192 install at marina.",
           "confidence": "high",
           "stage": "gate"
         }
@@ -388,14 +443,14 @@
     },
     {
       "id": "job-amit-pr0026",
-      "title": "Amit PR-0026 — pending send",
+      "title": "Amit PR-0026 \u2014 pending send",
       "type": "wrap",
       "vehicle": "van",
       "station": "chance-gate",
       "lane": "lane-c",
       "status": "pending-send",
       "color": "#e17055",
-      "summary": "Proposal PR-0026 for Amit is scrubbed and Margin Guard–cleared. Sitting at Chance Gate waiting for SEND.",
+      "summary": "Proposal PR-0026 for Amit is scrubbed and Margin Guard\u2013cleared. Sitting at Chance Gate waiting for SEND.",
       "confidenceOverall": "high",
       "thinkPath": [
         {
@@ -429,7 +484,7 @@
         {
           "id": "j4-s5",
           "label": "Await Chance SEND",
-          "detail": "One click from Chance → customer sees it. After accept → deposit → design.",
+          "detail": "One click from Chance \u2192 customer sees it. After accept \u2192 deposit \u2192 design.",
           "confidence": "high",
           "stage": "gate"
         }
@@ -437,7 +492,7 @@
     },
     {
       "id": "job-practice-wallco92",
-      "title": "Practice — wallco92 only",
+      "title": "Practice \u2014 wallco92 only",
       "type": "practice",
       "vehicle": "van",
       "station": "front-desk",
@@ -456,8 +511,8 @@
         },
         {
           "id": "j5-s2",
-          "label": "Simulate form → Wrapstart",
-          "detail": "Walk Receptionist capture. Lead Agent still OFF for real engage — practice drafts only.",
+          "label": "Simulate form \u2192 Wrapstart",
+          "detail": "Walk Receptionist capture. Lead Agent still OFF for real engage \u2014 practice drafts only.",
           "confidence": "high",
           "stage": "routing"
         },
@@ -488,31 +543,31 @@
   "futureCards": [
     {
       "phase": "0",
-      "emoji": "🧪",
-      "title": "Now — Train OFF",
-      "blurb": "Receptionist + Lead trained in Wrapstart. Engage OFF. Answer Off. Control Deck = Delco close companion. Grok drafts — you GO."
+      "emoji": "\ud83e\uddea",
+      "title": "Now \u2014 Train OFF",
+      "blurb": "Receptionist + Lead trained in Wrapstart. Engage OFF. Answer Off. Control Deck = Delco close companion. Grok drafts \u2014 you GO."
     },
     {
       "phase": "1",
-      "emoji": "🕹️",
-      "title": "Control deck v0.3",
-      "blurb": "Tonight: shop map + think-path + Grok thinking companion. GO/HOLD stubbed. No live Wrapstart send."
+      "emoji": "\ud83d\udd79\ufe0f",
+      "title": "Control deck v0.4-simple",
+      "blurb": "First screen: what\u2019s hot, what to do next, GO/HOLD. Steps under Show steps. AI OFF. No live send."
     },
     {
       "phase": "2",
-      "emoji": "🎙️",
+      "emoji": "\ud83c\udf99\ufe0f",
       "title": "Non-typing control",
       "blurb": "Voice to Grok, Slack GO buttons, 3D click islands, Steam Deck / tablet on the floor, QR on the van for status."
     },
     {
       "phase": "3",
-      "emoji": "🚦",
+      "emoji": "\ud83d\udea6",
       "title": "AI ON carefully",
-      "blurb": "Practice wallco92 → named leads → Engage. Receptionist after scripts. Approval Required. Max discount 0. Delco/MSA forever human."
+      "blurb": "Practice wallco92 \u2192 named leads \u2192 Engage. Receptionist after scripts. Approval Required. Max discount 0. Delco/MSA forever human."
     },
     {
       "phase": "4",
-      "emoji": "🔁",
+      "emoji": "\ud83d\udd01",
       "title": "Closed loop",
       "blurb": "Live Wrapstart jobs on the map. Your feedback clicks become standing rules / KB. Confidence meters learn from corrections."
     }
