@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Control Deck v0.3 — USA Wrap Co + DekWave</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="app">
+    <header id="top-bar">
+      <div class="brand">
+        <span class="logo-orb" aria-hidden="true"></span>
+        <div>
+          <h1>Control Deck</h1>
+          <p class="tagline">Jarvis companion · Grok + Wrapstart · v0.3</p>
+        </div>
+      </div>
+      <div class="mission-chip" id="mission-chip" title="Shop mission">Loading mission…</div>
+      <div class="top-actions">
+        <div id="ai-off-badge" class="ai-off-badge" title="Engage OFF · Answer calls Off · hardcoded — never wire live AI ON">
+          AI OFF
+          <span class="ai-off-sub">Engage OFF · Answer Off</span>
+        </div>
+        <button type="button" id="btn-mic" class="btn mic" title="voice coming" disabled aria-disabled="true">
+          🎤 <span class="mic-label">voice coming</span>
+        </button>
+        <button type="button" id="btn-future" class="btn ghost" title="Future roadmap">🚀 Future</button>
+        <button type="button" id="btn-reset-cam" class="btn ghost" title="Reset camera">⟲ Cam</button>
+        <button type="button" id="btn-export" class="btn primary">⬇ Export feedback JSON</button>
+      </div>
+    </header>
+
+    <aside id="lanes-panel" aria-label="Three lanes">
+      <h2>Three Lanes</h2>
+      <div id="lanes-list"></div>
+      <h2 class="rules-heading">Hard Rules</h2>
+      <ul id="rules-list"></ul>
+    </aside>
+
+    <main id="stage-wrap">
+      <canvas id="c"></canvas>
+      <div id="hud-hint">Drag to orbit · Scroll to zoom · Delco pre-opened · AI stays OFF · no live send</div>
+      <div id="flow-strip" aria-label="Lead flow"></div>
+    </main>
+
+    <aside id="detail-panel" class="hidden" aria-live="polite">
+      <button type="button" id="btn-close-detail" class="btn-icon" title="Close">✕</button>
+      <div id="detail-header"></div>
+      <div id="confidence-meter"></div>
+      <div id="gate-controls" class="gate-controls hidden">
+        <button type="button" id="btn-go" class="btn go" title="Stub — no live send">▶ GO</button>
+        <button type="button" id="btn-hold" class="btn hold" title="Stub — park only">⏸ HOLD</button>
+      </div>
+      <h3>Think Path</h3>
+      <p class="hint-sm">Tap a glowing step to leave feedback for Chance.</p>
+      <ol id="think-path"></ol>
+    </aside>
+
+    <aside id="companion-panel" aria-label="Grok thinking companion">
+      <div class="companion-head">
+        <div class="companion-avatar" aria-hidden="true">🧠</div>
+        <div>
+          <h2>Grok thinking</h2>
+          <p class="companion-sub">Delco close companion · UI only tonight</p>
+        </div>
+        <span class="companion-live">script</span>
+      </div>
+      <div id="companion-feed" class="companion-feed"></div>
+      <div class="companion-nav">
+        <button type="button" id="btn-comp-prev" class="btn ghost" title="Previous step">← Back</button>
+        <span id="companion-step-label" class="companion-step-label">1 / 4</span>
+        <button type="button" id="btn-comp-next" class="btn primary" title="Next step">Next →</button>
+      </div>
+      <div class="companion-gate">
+        <button type="button" id="btn-comp-go" class="btn go" title="Stub — no live send">▶ GO Soft Ask</button>
+        <button type="button" id="btn-comp-hold" class="btn hold" title="Stub — park only">⏸ HOLD</button>
+      </div>
+      <p class="companion-foot">No Wrapstart API · no email/SMS · AI OFF</p>
+    </aside>
+
+    <div id="tooltip" class="hidden"></div>
+
+    <aside id="future-panel" class="hidden" aria-label="Future roadmap" aria-live="polite">
+      <button type="button" id="btn-close-future" class="btn-icon" title="Close">✕</button>
+      <div class="future-head">
+        <h2>🚀 Future cockpit</h2>
+        <p class="hint-sm">Custom control app = cockpit. Wrapstart = hands. AI OFF until Chance GO.</p>
+      </div>
+      <div id="future-cards"></div>
+      <p class="future-foot">Docs: <code>wrap-shop-control-future-2026-10-06/</code></p>
+    </aside>
+
+    <div id="feedback-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="fb-title">
+      <div class="modal-card">
+        <h2 id="fb-title">Leave feedback</h2>
+        <p id="fb-step-label" class="fb-step"></p>
+        <textarea id="fb-text" rows="5" placeholder="What should Grok do differently on this step?"></textarea>
+        <div class="modal-actions">
+          <button type="button" id="fb-cancel" class="btn ghost">Cancel</button>
+          <button type="button" id="fb-save" class="btn primary">Save feedback</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="hidden"></div>
+  </div>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
