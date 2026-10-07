@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Control Deck v0.7-vault — USA Wrap Co</title>
+  <title>Control Deck v0.8-jarvis — USA Wrap Co</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -19,7 +19,7 @@
         <span class="logo-mark" aria-hidden="true">◈</span>
         <div>
           <h1>CONTROL DECK</h1>
-          <p class="tagline">v0.7-vault · AI OFF · no live send</p>
+          <p class="tagline">v0.8-jarvis · AI OFF · no live send</p>
         </div>
       </div>
       <div class="mission-chip" id="mission-chip" title="Shop mission">
@@ -38,6 +38,11 @@
       </div>
       <div class="top-actions">
         <button type="button" id="btn-board" class="btn ghost" title="On board">BOARD</button>
+        <button type="button" id="btn-jarvis" class="btn jarvis-toggle" aria-pressed="false" title="Turn Jarvis on — Grok Bot voice · deck is the body">
+          <span class="jarvis-toggle-mark" aria-hidden="true">◈</span>
+          <span class="jarvis-toggle-label">JARVIS</span>
+          <span class="jarvis-toggle-state" id="jarvis-toggle-state">OFF</span>
+        </button>
         <div id="ai-off-badge" class="ai-off-badge" title="Engage OFF · Answer calls Off · hardcoded — never wire live AI ON">
           AI OFF
           <span class="ai-off-sub">Engage OFF · Answer Off</span>
@@ -45,6 +50,33 @@
         <button type="button" id="btn-more" class="btn ghost" title="Lanes, rules, future">MORE</button>
       </div>
     </header>
+
+    <section id="jarvis-strip" class="jarvis-strip jarvis-off" aria-label="Jarvis companion" hidden>
+      <div class="jarvis-presence">
+        <div class="jarvis-avatar" aria-hidden="true">◈</div>
+        <div class="jarvis-id">
+          <div class="jarvis-name-row">
+            <h2 class="jarvis-name">JARVIS</h2>
+            <span class="jarvis-hub">Grok hub</span>
+          </div>
+          <p class="jarvis-status" id="jarvis-status">standby</p>
+        </div>
+        <p class="jarvis-brief" id="jarvis-brief" aria-live="polite">Soft Ask path ready when you are.</p>
+        <div class="jarvis-controls">
+          <button type="button" id="btn-jarvis-mute" class="btn ghost jarvis-mute muted" aria-pressed="true" title="Voice beep muted by default">🔇 MUTE</button>
+          <button type="button" id="btn-jarvis-listen" class="btn ghost jarvis-listen" title="Listening UI — Web Speech if available">🎤 LISTEN</button>
+        </div>
+      </div>
+      <aside id="whiteboard" class="whiteboard" aria-label="Soft Ask whiteboard">
+        <div class="wb-head">
+          <span class="wb-kicker">WHITEBOARD // SOFT ASK</span>
+          <span class="wb-sub" id="wb-sub">Delco PR-0014</span>
+        </div>
+        <ol id="wb-steps" class="wb-steps">
+          <!-- filled by app.js -->
+        </ol>
+      </aside>
+    </section>
 
     <main id="stage-wrap" aria-label="Mission rail">
       <div class="stage-head">
@@ -81,7 +113,7 @@
         <span class="next-kicker">What to do next</span>
         <p class="next-action" id="next-action">Loading…</p>
         <div class="next-meta">
-          <button type="button" id="btn-show-steps" class="link-btn" aria-expanded="false">Brain thoughts</button>
+          <button type="button" id="btn-show-steps" class="link-btn" aria-expanded="false">Jarvis thoughts</button>
         </div>
       </div>
 
@@ -104,11 +136,11 @@
       <div id="board-list" class="board-list"></div>
     </aside>
 
-    <aside id="steps-panel" class="hidden glass-panel" aria-label="Brain thoughts" aria-live="polite">
+    <aside id="steps-panel" class="hidden glass-panel" aria-label="Jarvis thoughts" aria-live="polite">
       <div class="steps-head">
         <div>
-          <h2>Brain thoughts</h2>
-          <p class="hint-sm">One next action · expand for the think path</p>
+          <h2>Jarvis · Grok hub</h2>
+          <p class="hint-sm">One next action · Soft Ask walkthrough · typing reveal</p>
         </div>
         <button type="button" id="btn-hide-steps" class="btn-icon" title="Hide">✕</button>
       </div>
@@ -138,7 +170,7 @@
       </div>
       <div class="more-actions">
         <button type="button" id="btn-export" class="btn ghost">⬇ Export feedback</button>
-        <button type="button" id="btn-mic" class="btn mic" title="voice coming" disabled aria-disabled="true">🎤 voice coming</button>
+        <button type="button" id="btn-mic" class="btn mic" title="Listening UI — Web Speech if available, else visual only" aria-pressed="false">🎤 listen</button>
       </div>
       <h3>Three lanes</h3>
       <div id="lanes-list"></div>
@@ -152,7 +184,7 @@
     <aside id="detail-panel" class="sr-only" aria-hidden="true"></aside>
     <aside id="lanes-panel" class="sr-only" aria-hidden="true"><h2 class="rules-heading">Hard Rules</h2></aside>
     <aside id="companion-panel" class="sr-only" aria-hidden="true">
-      <div class="companion-head"><div class="companion-avatar">◆</div><h2>Grok</h2><span class="companion-live">script</span></div>
+      <div class="companion-head"><div class="companion-avatar">◈</div><h2>Jarvis</h2><span class="companion-live">Grok hub</span></div>
       <p class="companion-sub"></p>
       <p class="companion-foot"></p>
       <div class="companion-nav"></div>
@@ -170,7 +202,7 @@
       <div class="modal-card">
         <h2 id="fb-title">Leave feedback</h2>
         <p id="fb-step-label" class="fb-step"></p>
-        <textarea id="fb-text" rows="5" placeholder="What should Grok do differently on this step?"></textarea>
+        <textarea id="fb-text" rows="5" placeholder="What should Jarvis (Grok hub) do differently on this step?"></textarea>
         <div class="modal-actions">
           <button type="button" id="fb-cancel" class="btn ghost">Cancel</button>
           <button type="button" id="fb-save" class="btn primary">Save feedback</button>

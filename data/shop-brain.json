@@ -1,16 +1,24 @@
 {
   "meta": {
     "title": "USA Wrap Co Control Deck",
-    "subtitle": "Vault HUD \u00b7 Delco Soft Ask \u00b7 AI OFF \u00b7 no live send",
+    "subtitle": "Vault HUD \u00b7 Jarvis / Grok hub \u00b7 Delco Soft Ask \u00b7 AI OFF \u00b7 no live send",
     "date": "2026-10-06",
     "owner": "Chance Wallace",
     "mission": "Delco #1 Soft Ask (call + email) \u00b7 HOLD auto-send \u00b7 11 waiting Chance GO \u00b7 outbound paused \u00b7 AI OFF",
     "aiEngage": "off",
     "answerCalls": "off",
-    "controlSpec": "v0.7-vault",
-    "version": "0.7-vault",
+    "controlSpec": "v0.8-jarvis",
+    "version": "0.8-jarvis",
     "defaultJobId": "job-delco-pr0014",
-    "delcoStallHours": 48
+    "delcoStallHours": 48,
+    "jarvis": {
+      "name": "Jarvis",
+      "voice": "Grok Bot",
+      "body": "Control Deck UI \u00b7 whiteboard Soft Ask walkthrough",
+      "hubLabel": "Jarvis \u00b7 Grok hub",
+      "defaultOn": false,
+      "beepMutedDefault": true
+    }
   },
   "lanes": [
     {
@@ -25,11 +33,11 @@
     },
     {
       "id": "lane-b",
-      "name": "Grok Bot Hub",
+      "name": "Jarvis \u00b7 Grok hub",
       "color": "#ff9f43",
       "summary": "Back-office brain: scrub proposals, Margin Guard, draft Soft Asks, route jobs, keep rules. Never sends without Chance.",
       "roles": [
-        "Grok Bot",
+        "Jarvis \u00b7 Grok Bot",
         "Margin Guard",
         "Proposal Scrub"
       ]
@@ -550,7 +558,7 @@
       "phase": "0",
       "emoji": "\ud83e\uddea",
       "title": "Now \u2014 Train OFF",
-      "blurb": "Receptionist + Lead trained in Wrapstart. Engage OFF. Answer Off. Control Deck = Delco close companion. Grok drafts \u2014 you GO."
+      "blurb": "Receptionist + Lead trained in Wrapstart. Engage OFF. Answer Off. Control Deck = Jarvis body \u00b7 Delco Soft Ask whiteboard. Jarvis (Grok hub) drafts \u2014 you GO."
     },
     {
       "phase": "1",

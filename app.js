@@ -2,7 +2,25 @@ const FEEDBACK_KEY = "wrapShopControlDeckFeedback_v03";
 const STUB_TOAST_GO = "Queued for Chance — no live send";
 const STUB_TOAST_HOLD = "Parked — HOLD queued for Chance";
 const DATA_URL = "./data/shop-brain.json";
-const VERSION_TAG = "v0.7-vault";
+const VERSION_TAG = "v0.8-jarvis";
+const JARVIS_KEY = "wrapShopControlDeckJarvis_v08";
+const JARVIS_MUTE_KEY = "wrapShopControlDeckJarvisMute_v08";
+
+/** Soft Ask whiteboard path — lights up as Jarvis briefs */
+const WHITEBOARD_STEPS = [
+  { id: "wb1", label: "Soft Ask ready", detail: "Warm call + proposal link · Fixed / Folding pretax · nothing sent" },
+  { id: "wb2", label: "Why tonight", detail: "Competitors in play · ~48h stall · Delco is the close that moves first" },
+  { id: "wb3", label: "GO or HOLD", detail: "Deck GO = stub queue only · real Soft Ask stays in Wrapstart" },
+  { id: "wb4", label: "If they accept", detail: "50% deposit invoice → then Design · no free art on a handshake" },
+];
+
+/** One-line Jarvis briefings per Soft Ask step */
+const JARVIS_BRIEFS = [
+  "Briefing Delco — Soft Ask draft is ready. Nothing sent. AI OFF.",
+  "Competitors already in play. Stall clock ~48h. Delco first.",
+  "Your call — GO queues a stub; HOLD parks it. No live send.",
+  "Accept path — 50% deposit, then Design. Soft Ask name stays.",
+];
 
 /** Pipeline stages for the vault mission rail */
 const RAIL_STAGES = [
@@ -36,6 +54,15 @@ let companionStep = 0;
 let companionRevealed = 0;
 /** @type {string} */
 let activeStageId = "soft-ask";
+/** Jarvis mode — Grok Bot is the voice; deck UI is the body */
+let jarvisOn = loadJarvisOn();
+let jarvisMuted = loadJarvisMuted();
+let jarvisListening = false;
+/** @type {number|null} */
+let typeTimer = null;
+/** @type {SpeechRecognition|null} */
+let speechRec = null;
+let jarvisStatusMode = "standby"; // standby | listening | briefing
 
 function jobNeedsChance(job) {
   if (!job) return false;
@@ -100,6 +127,36 @@ function loadFeedback() {
 
 function saveFeedback() {
   localStorage.setItem(FEEDBACK_KEY, JSON.stringify(feedbackStore));
+}
+
+function loadJarvisOn() {
+  try {
+    return localStorage.getItem(JARVIS_KEY) === "on";
+  } catch {
+    return false;
+  }
+}
+
+function saveJarvisOn() {
+  try {
+    localStorage.setItem(JARVIS_KEY, jarvisOn ? "on" : "off");
+  } catch { /* ignore */ }
+}
+
+function loadJarvisMuted() {
+  try {
+    const v = localStorage.getItem(JARVIS_MUTE_KEY);
+    if (v === null) return true; // muted by default
+    return v !== "off";
+  } catch {
+    return true;
+  }
+}
+
+function saveJarvisMuted() {
+  try {
+    localStorage.setItem(JARVIS_MUTE_KEY, jarvisMuted ? "on" : "off");
+  } catch { /* ignore */ }
 }
 
 function showToast(msg, kind) {
@@ -575,7 +632,7 @@ function openJob(job) {
   const cc = confClass(job.confidenceOverall);
   if (confidenceMeter) {
     confidenceMeter.innerHTML = `
-      <div class="cm-label">Grok confidence</div>
+      <div class="cm-label">Jarvis confidence</div>
       <div class="cm-bar"><div class="cm-fill ${cc}"></div></div>
       <div class="cm-text ${cc}">${confLabel(job.confidenceOverall)}</div>
     `;
@@ -684,6 +741,240 @@ function getCompanionSteps() {
   return [];
 }
 
+function typeReveal(el, fullText, onDone) {
+  if (!el) {
+    if (onDone) onDone();
+    return;
+  }
+  if (typeTimer) {
+    clearInterval(typeTimer);
+    typeTimer = null;
+  }
+  if (!jarvisOn) {
+    el.textContent = fullText;
+    if (onDone) onDone();
+    return;
+  }
+  el.textContent = "";
+  el.classList.add("typing");
+  let i = 0;
+  const step = Math.max(1, Math.floor(fullText.length / 60));
+  typeTimer = setInterval(() => {
+    i = Math.min(fullText.length, i + step);
+    el.textContent = fullText.slice(0, i);
+    if (i >= fullText.length) {
+      clearInterval(typeTimer);
+      typeTimer = null;
+      el.classList.remove("typing");
+      if (onDone) onDone();
+    }
+  }, 18);
+}
+
+function playJarvisBeep() {
+  if (jarvisMuted || !jarvisOn) return;
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "sine";
+    o.frequency.value = 660;
+    g.gain.value = 0.04;
+    o.connect(g);
+    g.connect(ctx.destination);
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.12);
+    o.stop(ctx.currentTime + 0.14);
+    setTimeout(() => ctx.close().catch(() => {}), 200);
+  } catch { /* ignore */ }
+}
+
+function setJarvisStatus(mode) {
+  jarvisStatusMode = mode || "standby";
+  const el = document.getElementById("jarvis-status");
+  if (!el) return;
+  const map = {
+    listening: "listening",
+    briefing: "briefing Delco",
+    standby: "standby",
+  };
+  el.textContent = map[jarvisStatusMode] || "standby";
+  el.dataset.mode = jarvisStatusMode;
+}
+
+function syncJarvisBrief() {
+  const brief = document.getElementById("jarvis-brief");
+  if (!brief) return;
+  const line =
+    JARVIS_BRIEFS[Math.max(0, Math.min(companionStep, JARVIS_BRIEFS.length - 1))] ||
+    "Soft Ask path ready when you are.";
+  if (jarvisOn) {
+    setJarvisStatus(jarvisListening ? "listening" : "briefing");
+    typeReveal(brief, line);
+  } else {
+    brief.textContent = line;
+    setJarvisStatus("standby");
+  }
+}
+
+function renderWhiteboard() {
+  const list = document.getElementById("wb-steps");
+  const sub = document.getElementById("wb-sub");
+  if (!list) return;
+  if (sub) {
+    const job = activeJob || shopData?.jobs?.find((j) => j.id?.includes("delco"));
+    const prop = job?.wrapstart?.proposalId || "PR-0014";
+    sub.textContent = `Delco ${prop}`;
+  }
+  list.innerHTML = WHITEBOARD_STEPS.map((s, idx) => {
+    let state = "upcoming";
+    if (idx < companionStep) state = "done";
+    if (idx === companionStep) state = "active";
+    return `<li class="wb-step ${state}" data-idx="${idx}">
+      <span class="wb-num">${idx + 1}</span>
+      <span class="wb-body">
+        <span class="wb-label">${escapeHtml(s.label)}</span>
+        <span class="wb-detail">${escapeHtml(s.detail)}</span>
+      </span>
+    </li>`;
+  }).join("");
+  list.querySelectorAll(".wb-step").forEach((li) => {
+    li.addEventListener("click", () => {
+      const idx = Number(li.getAttribute("data-idx"));
+      if (Number.isNaN(idx)) return;
+      companionStep = idx;
+      companionRevealed = Math.max(companionRevealed, companionStep);
+      renderCompanion(true);
+      if (jarvisOn) playJarvisBeep();
+    });
+  });
+}
+
+function applyJarvisMode() {
+  const strip = document.getElementById("jarvis-strip");
+  const btn = document.getElementById("btn-jarvis");
+  const stateEl = document.getElementById("jarvis-toggle-state");
+  const muteBtn = document.getElementById("btn-jarvis-mute");
+  document.body.classList.toggle("jarvis-on", jarvisOn);
+  if (strip) {
+    strip.hidden = !jarvisOn;
+    strip.classList.toggle("jarvis-off", !jarvisOn);
+  }
+  if (btn) {
+    btn.setAttribute("aria-pressed", jarvisOn ? "true" : "false");
+    btn.classList.toggle("on", jarvisOn);
+  }
+  if (stateEl) stateEl.textContent = jarvisOn ? "ON" : "OFF";
+  if (muteBtn) {
+    muteBtn.classList.toggle("muted", jarvisMuted);
+    muteBtn.setAttribute("aria-pressed", jarvisMuted ? "true" : "false");
+    muteBtn.textContent = jarvisMuted ? "🔇 MUTE" : "🔊 BEEP";
+  }
+  const showBtn = document.getElementById("btn-show-steps");
+  const stepsOpen = !document.getElementById("steps-panel")?.classList.contains("hidden");
+  if (showBtn) showBtn.textContent = stepsOpen ? "Hide Jarvis" : "Jarvis thoughts";
+  renderWhiteboard();
+  syncJarvisBrief();
+  if (jarvisOn) setJarvisStatus(jarvisListening ? "listening" : "briefing");
+  else setJarvisStatus("standby");
+}
+
+function setJarvisOn(on) {
+  jarvisOn = !!on;
+  saveJarvisOn();
+  applyJarvisMode();
+  showToast(
+    jarvisOn
+      ? "Jarvis ON — Grok hub voice · whiteboard Soft Ask walkthrough"
+      : "Jarvis OFF — companion standby · Soft Ask path still available"
+  );
+  if (jarvisOn) {
+    setStepsOpen(true);
+    playJarvisBeep();
+  }
+}
+
+function toggleListening() {
+  jarvisListening = !jarvisListening;
+  const mic = document.getElementById("btn-mic");
+  const listenBtn = document.getElementById("btn-jarvis-listen");
+  if (mic) {
+    mic.setAttribute("aria-pressed", jarvisListening ? "true" : "false");
+    mic.classList.toggle("listening", jarvisListening);
+    mic.textContent = jarvisListening ? "🎤 listening" : "🎤 listen";
+  }
+  if (listenBtn) {
+    listenBtn.classList.toggle("listening", jarvisListening);
+    listenBtn.setAttribute("aria-pressed", jarvisListening ? "true" : "false");
+  }
+  if (jarvisListening) {
+    setJarvisStatus("listening");
+    startSpeechListen();
+    showToast("Listening UI on — Web Speech if available, else visual only");
+  } else {
+    stopSpeechListen();
+    setJarvisStatus(jarvisOn ? "briefing" : "standby");
+    showToast("Listening off");
+  }
+}
+
+function startSpeechListen() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) return; // UI-only fallback
+  try {
+    if (speechRec) {
+      try { speechRec.stop(); } catch { /* ignore */ }
+    }
+    speechRec = new SR();
+    speechRec.continuous = false;
+    speechRec.interimResults = false;
+    speechRec.lang = "en-US";
+    speechRec.onresult = () => {
+      showToast("Heard you — Soft Ask walkthrough stays on-screen (no live STT actions)");
+      jarvisListening = false;
+      toggleListeningCleanup();
+    };
+    speechRec.onerror = () => {
+      showToast("Speech unavailable — Jarvis stays visual");
+      jarvisListening = false;
+      toggleListeningCleanup();
+    };
+    speechRec.onend = () => {
+      if (jarvisListening) {
+        jarvisListening = false;
+        toggleListeningCleanup();
+      }
+    };
+    speechRec.start();
+  } catch {
+    showToast("Speech unavailable — Jarvis stays visual");
+  }
+}
+
+function toggleListeningCleanup() {
+  const mic = document.getElementById("btn-mic");
+  const listenBtn = document.getElementById("btn-jarvis-listen");
+  if (mic) {
+    mic.setAttribute("aria-pressed", "false");
+    mic.classList.remove("listening");
+    mic.textContent = "🎤 listen";
+  }
+  if (listenBtn) {
+    listenBtn.classList.remove("listening");
+    listenBtn.setAttribute("aria-pressed", "false");
+  }
+  setJarvisStatus(jarvisOn ? "briefing" : "standby");
+}
+
+function stopSpeechListen() {
+  if (speechRec) {
+    try { speechRec.stop(); } catch { /* ignore */ }
+    speechRec = null;
+  }
+}
+
 function renderCompanion(force) {
   const feed = document.getElementById("companion-feed");
   const label = document.getElementById("companion-step-label");
@@ -697,18 +988,23 @@ function renderCompanion(force) {
   companionRevealed = Math.max(companionRevealed, companionStep);
 
   const s = steps[companionStep];
-  const more = steps.length - 1;
+  const more = steps.length - companionStep - 1;
   feed.innerHTML = `
     <article class="companion-bubble tone-${escapeHtml(s.tone || "")} revealed active" data-idx="${companionStep}">
+      <div class="cb-kicker">Jarvis · Grok hub</div>
       <div class="cb-title">${escapeHtml(s.title)}</div>
-      <p class="cb-body">${escapeHtml(s.body)}</p>
+      <p class="cb-body" id="companion-type-body"></p>
     </article>
-    ${more > 0 ? `<div class="companion-bubble collapsed-hint">${more} more thought${more === 1 ? "" : "s"} — use Next / Back</div>` : ""}
+    ${more > 0 ? `<div class="companion-bubble collapsed-hint">${more} more · Next / Back · whiteboard tracks Soft Ask</div>` : ""}
   `;
+  const bodyEl = document.getElementById("companion-type-body");
+  typeReveal(bodyEl, s.body || "");
 
   if (label) label.textContent = `${companionStep + 1} / ${steps.length}`;
-  if (force !== false) syncNextAction();
-  else syncNextAction();
+  syncNextAction();
+  renderWhiteboard();
+  syncJarvisBrief();
+  if (force && jarvisOn) setJarvisStatus(jarvisListening ? "listening" : "briefing");
 }
 
 function companionNext() {
@@ -718,8 +1014,9 @@ function companionNext() {
     companionStep += 1;
     companionRevealed = Math.max(companionRevealed, companionStep);
     renderCompanion(true);
+    if (jarvisOn) playJarvisBeep();
   } else {
-    showToast("End of Delco think path — GO/HOLD still stubbed");
+    showToast("End of Delco Soft Ask path — GO/HOLD still stubbed");
   }
 }
 
@@ -727,6 +1024,7 @@ function companionPrev() {
   if (companionStep > 0) {
     companionStep -= 1;
     renderCompanion(true);
+    if (jarvisOn) playJarvisBeep();
   }
 }
 
@@ -738,6 +1036,9 @@ function wireCompanionControls() {
   const gateGo = document.getElementById("btn-go");
   const gateHold = document.getElementById("btn-hold");
   const mic = document.getElementById("btn-mic");
+  const jarvisBtn = document.getElementById("btn-jarvis");
+  const muteBtn = document.getElementById("btn-jarvis-mute");
+  const listenBtn = document.getElementById("btn-jarvis-listen");
 
   if (next) next.addEventListener("click", companionNext);
   if (prev) prev.addEventListener("click", companionPrev);
@@ -745,10 +1046,29 @@ function wireCompanionControls() {
   if (hold) hold.addEventListener("click", () => stubGateAction("companion-hold"));
   if (gateGo) gateGo.addEventListener("click", () => stubGateAction("detail-go"));
   if (gateHold) gateHold.addEventListener("click", () => stubGateAction("detail-hold"));
+  if (jarvisBtn) {
+    jarvisBtn.addEventListener("click", () => setJarvisOn(!jarvisOn));
+  }
+  if (muteBtn) {
+    muteBtn.addEventListener("click", () => {
+      jarvisMuted = !jarvisMuted;
+      saveJarvisMuted();
+      applyJarvisMode();
+      showToast(jarvisMuted ? "Jarvis beep muted" : "Jarvis beep on (subtle)");
+      if (!jarvisMuted) playJarvisBeep();
+    });
+  }
+  if (listenBtn) {
+    listenBtn.addEventListener("click", () => {
+      if (!jarvisOn) setJarvisOn(true);
+      toggleListening();
+    });
+  }
   if (mic) {
     mic.addEventListener("click", (e) => {
       e.preventDefault();
-      showToast("voice coming");
+      if (!jarvisOn) setJarvisOn(true);
+      toggleListening();
     });
   }
 }
@@ -760,7 +1080,7 @@ function setStepsOpen(open) {
   panel.classList.toggle("hidden", !open);
   if (btn) {
     btn.setAttribute("aria-expanded", open ? "true" : "false");
-    btn.textContent = open ? "Hide thoughts" : "Brain thoughts";
+    btn.textContent = open ? "Hide Jarvis" : "Jarvis thoughts";
   }
   if (open) renderCompanion(true);
 }
@@ -855,13 +1175,18 @@ async function main() {
   wireCompanionControls();
   wireSimpleUi();
   renderCompanion(false);
+  applyJarvisMode();
   syncOpsMeters();
   if (detailPanel) detailPanel.classList.add("hidden");
-  setStepsOpen(false);
+  setStepsOpen(jarvisOn);
   setDetailExtrasOpen(false);
   setBoardOpen(false);
   focusDelcoOnLoad();
-  showToast(`${VERSION_TAG} — Delco Soft Ask · AI OFF · no live send`);
+  showToast(
+    jarvisOn
+      ? `${VERSION_TAG} — Jarvis ON · Delco Soft Ask · AI OFF · no live send`
+      : `${VERSION_TAG} — tap JARVIS to wake companion · AI OFF · no live send`
+  );
 }
 
 main();
