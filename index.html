@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Control Deck v0.9-hologram — USA Wrap Co</title>
+  <title>Control Deck v0.9.1-journey — USA Wrap Co</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -27,7 +27,7 @@
         <span class="logo-mark" aria-hidden="true">◈</span>
         <div>
           <h1>CONTROL DECK</h1>
-          <p class="tagline">v0.9-hologram · AI OFF · no live send</p>
+          <p class="tagline">v0.9.1-journey · AI OFF · no live send</p>
         </div>
       </div>
       <div class="mission-chip" id="mission-chip" title="Shop mission">
@@ -59,8 +59,9 @@
       </div>
     </header>
 
-    <main id="holo-stage" aria-label="Jarvis hologram stage">
+    <main id="holo-stage" aria-label="Jarvis hologram stage" data-motion="softask">
       <canvas id="holo-canvas"></canvas>
+      <canvas id="live-motion" class="live-motion" aria-hidden="true"></canvas>
 
       <div class="holo-hud" id="holo-hud">
         <div class="holo-id">
@@ -73,9 +74,20 @@
           <button type="button" id="btn-jarvis-listen" class="btn ghost jarvis-listen" title="Listening UI — Web Speech if available">🎤 LISTEN</button>
           <button type="button" id="btn-wb-cycle" class="btn ghost" title="Cycle whiteboard: Soft Ask · jobs · email">⬜ BOARD VIEW</button>
         </div>
-        <div class="holo-softask-chip" title="Soft Ask name stays">
+        <div class="holo-softask-chip" id="softask-chip" title="Soft Ask name stays">
           <span class="sa-dot" aria-hidden="true"></span>
-          Soft Ask · Delco PR-0014
+          <span id="softask-chip-text">Soft Ask · Delco PR-0014</span>
+        </div>
+        <div class="live-context" id="live-context" aria-live="polite">
+          <div class="live-context-mode">
+            <span class="live-pulse" aria-hidden="true"></span>
+            <span id="live-mode-label">SOFT ASK</span>
+          </div>
+          <div class="live-context-title" id="live-context-title">Delco PR-0014 · Soft Ask ready</div>
+          <div class="live-context-sub" id="live-context-sub">Hot job · nothing sent · AI OFF</div>
+          <div class="live-progress" id="live-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div class="live-progress-fill" id="live-progress-fill"></div>
+          </div>
         </div>
       </div>
 
@@ -95,9 +107,9 @@
         <span class="next-kicker">What to do next</span>
         <p class="next-action" id="next-action">Loading…</p>
         <div class="next-meta">
-          <button type="button" id="btn-show-steps" class="link-btn" aria-expanded="false">Jarvis thoughts</button>
+          <button type="button" id="btn-show-steps" class="link-btn" aria-expanded="true">Hide Jarvis</button>
           <button type="button" id="btn-comp-prev" class="btn ghost dock-nav">←</button>
-          <span id="companion-step-label" class="companion-step-label">1 / 4</span>
+          <span id="companion-step-label" class="companion-step-label">1 / 15</span>
           <button type="button" id="btn-comp-next" class="btn ghost dock-nav">→</button>
         </div>
       </div>
@@ -121,7 +133,7 @@
       <div id="board-list" class="board-list"></div>
     </aside>
 
-    <aside id="steps-panel" class="hidden glass-panel" aria-label="Jarvis thoughts" aria-live="polite">
+    <aside id="steps-panel" class="glass-panel" aria-label="Jarvis thoughts" aria-live="polite">
       <div class="steps-head">
         <div>
           <h2>Jarvis · Grok hub</h2>
@@ -132,7 +144,7 @@
       <div id="companion-feed" class="companion-feed"></div>
       <div class="steps-nav">
         <button type="button" id="btn-steps-prev" class="btn ghost">← Back</button>
-        <span id="steps-step-label" class="companion-step-label">1 / 4</span>
+        <span id="steps-step-label" class="companion-step-label">1 / 15</span>
         <button type="button" id="btn-steps-next" class="btn primary">Next →</button>
       </div>
       <div id="detail-extras" class="detail-extras hidden">

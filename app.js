@@ -4,7 +4,7 @@ const FEEDBACK_KEY = "wrapShopControlDeckFeedback_v03";
 const STUB_TOAST_GO = "Queued for Chance — no live send";
 const STUB_TOAST_HOLD = "Parked — HOLD queued for Chance";
 const DATA_URL = "./data/shop-brain.json";
-const VERSION_TAG = "v0.9-hologram";
+const VERSION_TAG = "v0.9.1-journey";
 const JARVIS_KEY = "wrapShopControlDeckJarvis_v09";
 const JARVIS_MUTE_KEY = "wrapShopControlDeckJarvisMute_v09";
 const WRAP_GUY_URL = "./assets/wrap-guy-pointing.png";
@@ -59,6 +59,10 @@ let speechRec = null;
 let wbMode = 0; // 0 soft ask · 1 jobs · 2 email
 let wbDrawProgress = 0;
 let wbNeedsRedraw = true;
+/** @type {"softask"|"journey"|"hot"|"gate"} */
+let motionMode = "softask";
+let motionParticles = [];
+let liveMotionReady = false;
 
 const toast = document.getElementById("toast");
 const detailPanel = document.getElementById("detail-panel");
@@ -288,6 +292,7 @@ function resizeHolo() {
   holo.renderer.setSize(w, h, false);
   holo.camera.aspect = w / h;
   holo.camera.updateProjectionMatrix();
+  ensureLiveMotionCanvas();
 }
 
 function animateHolo() {
@@ -326,6 +331,17 @@ function animateHolo() {
     }
   }
 
+  // Context-reactive figure energy
+  const energy = motionEnergy();
+  if (holo.figureRoot && jarvisOn) {
+    holo.figureRoot.position.y = Math.sin(t * (1.4 + energy * 1.2)) * (0.04 + energy * 0.03);
+    holo.figureRoot.rotation.y = Math.sin(t * (0.55 + energy * 0.4)) * (0.08 + energy * 0.06);
+  }
+  if (holo.pedestal) {
+    holo.pedestal.rotation.y = t * (0.35 + energy * 0.55);
+  }
+
+  drawLiveMotion(t);
   holo.renderer.render(holo.scene, holo.camera);
 }
 
@@ -371,7 +387,12 @@ function drawWhiteboard(resetDraw) {
   ctx.fillRect(0, 0, W, 56);
   ctx.fillStyle = "#7ec8e3";
   ctx.font = "600 22px 'IBM Plex Mono', monospace";
-  const headers = ["WHITEBOARD // SOFT ASK", "WHITEBOARD // JOBS", "WHITEBOARD // EMAIL DRAFT"];
+  const onJourney = wbMode === 0 && getSalesJourney().length && companionStep >= 4;
+  const headers = [
+    onJourney ? "WHITEBOARD // SALES JOURNEY" : "WHITEBOARD // SOFT ASK",
+    "WHITEBOARD // JOBS",
+    "WHITEBOARD // EMAIL DRAFT",
+  ];
   ctx.fillText(headers[wbMode] || headers[0], 28, 36);
   ctx.fillStyle = "#8a96a3";
   ctx.font = "500 16px 'IBM Plex Mono', monospace";
@@ -397,19 +418,21 @@ function drawWhiteboard(resetDraw) {
 }
 
 function drawWbSoftAsk(ctx, W, H, p) {
-  const steps = WHITEBOARD_STEPS;
+  const steps = whiteboardStepsForMode();
+  const activeIdx = journeyActiveIndex();
   const startY = 90;
+  const rowH = steps.length > 5 ? Math.min(100, Math.floor((H - 100) / steps.length)) : 120;
   steps.forEach((s, idx) => {
-    const reveal = Math.max(0, Math.min(1, (p - idx * 0.18) / 0.35));
+    const reveal = Math.max(0, Math.min(1, (p - idx * 0.12) / 0.3));
     if (reveal <= 0) return;
-    const y = startY + idx * 120;
-    const active = idx === companionStep;
-    const done = idx < companionStep;
+    const y = startY + idx * rowH;
+    const active = idx === activeIdx;
+    const done = idx < activeIdx;
 
     ctx.globalAlpha = reveal;
     // card
     ctx.fillStyle = active ? "rgba(126,200,227,0.16)" : "rgba(20,28,34,0.9)";
-    roundRect(ctx, 36, y, W - 72, 100, 4);
+    roundRect(ctx, 36, y, W - 72, Math.max(48, rowH - 8), 4);
     ctx.fill();
     ctx.strokeStyle = active ? "rgba(168,228,255,0.7)" : "rgba(126,200,227,0.25)";
     ctx.lineWidth = active ? 2 : 1;
@@ -417,13 +440,15 @@ function drawWbSoftAsk(ctx, W, H, p) {
 
     // number circle
     ctx.beginPath();
-    ctx.arc(86, y + 50, 26, 0, Math.PI * 2);
+    const cy = y + Math.floor(rowH / 2);
+    const cr = rowH < 110 ? 18 : 26;
+    ctx.arc(86, cy, cr, 0, Math.PI * 2);
     ctx.fillStyle = done ? "rgba(107,207,142,0.35)" : active ? "rgba(126,200,227,0.35)" : "rgba(60,80,90,0.5)";
     ctx.fill();
     ctx.fillStyle = done ? "#6bcf8e" : "#a8e4ff";
-    ctx.font = "700 22px 'IBM Plex Mono', monospace";
+    ctx.font = `700 ${rowH < 110 ? 16 : 22}px 'IBM Plex Mono', monospace`;
     ctx.textAlign = "center";
-    ctx.fillText(String(idx + 1), 86, y + 58);
+    ctx.fillText(String(idx + 1), 86, cy + (rowH < 110 ? 5 : 8));
     ctx.textAlign = "left";
 
     // drawing line animation
@@ -431,17 +456,20 @@ function drawWbSoftAsk(ctx, W, H, p) {
       ctx.strokeStyle = "rgba(168,228,255,0.85)";
       ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(128, y + 78);
-      ctx.lineTo(128 + (W - 220) * reveal, y + 78);
+      ctx.moveTo(128, y + Math.floor(rowH * 0.72));
+      ctx.lineTo(128 + (W - 220) * reveal, y + Math.floor(rowH * 0.72));
       ctx.stroke();
     }
 
+    const titleSize = rowH < 110 ? 18 : 26;
+    const detailSize = rowH < 110 ? 13 : 18;
     ctx.fillStyle = "#e8edf2";
-    ctx.font = "600 26px 'IBM Plex Sans', sans-serif";
-    ctx.fillText(s.label, 130, y + 42);
+    ctx.font = `600 ${titleSize}px 'IBM Plex Sans', sans-serif`;
+    ctx.fillText(s.label, 130, y + Math.floor(rowH * 0.35));
     ctx.fillStyle = "#8a96a3";
-    ctx.font = "400 18px 'IBM Plex Sans', sans-serif";
-    ctx.fillText(s.detail.slice(0, Math.floor(s.detail.length * reveal)), 130, y + 72);
+    ctx.font = `400 ${detailSize}px 'IBM Plex Sans', sans-serif`;
+    const detail = (s.detail || "").slice(0, Math.floor((s.detail || "").length * reveal));
+    ctx.fillText(detail.slice(0, rowH < 110 ? 72 : 90), 130, y + Math.floor(rowH * 0.62));
     ctx.globalAlpha = 1;
   });
 }
@@ -808,7 +836,7 @@ function populateUI() {
       "50% deposit before Design",
       "Chance = SEND gate",
     ];
-    rules.innerHTML = list.map((r) => `<span class="rule-chip" role="listitem">${escapeHtml(typeof r === "string" ? r : r.label || r)}</span>`).join("");
+    rules.innerHTML = list.map((r) => `<span class="rule-chip" role="listitem">${escapeHtml(typeof r === "string" ? r : r.title || r.label || r.detail || String(r))}</span>`).join("");
   }
 
   const future = document.getElementById("future-cards");
@@ -824,7 +852,10 @@ function populateUI() {
   }
 
   const flow = document.getElementById("flow-strip");
-  if (flow && shopData.flow) flow.textContent = (shopData.flow || []).join(" → ");
+  if (flow) {
+    const strip = shopData.flow || shopData.leadFlow || [];
+    if (strip.length) flow.textContent = strip.join(" → ");
+  }
 
   syncHotCard();
   syncNextAction();
@@ -837,6 +868,274 @@ function getCompanionSteps() {
   if (script?.steps) return script.steps;
   return [];
 }
+
+function getSalesJourney() {
+  const j = shopData?.salesJourney;
+  return Array.isArray(j) ? j : [];
+}
+
+function activeCompanionStep() {
+  const steps = getCompanionSteps();
+  if (!steps.length) return null;
+  const i = Math.max(0, Math.min(companionStep, steps.length - 1));
+  return steps[i];
+}
+
+function whiteboardStepsForMode() {
+  const active = activeCompanionStep();
+  const journey = getSalesJourney();
+  if (active?.journeyId && journey.length) {
+    return journey.map((s) => ({
+      id: s.id,
+      label: s.label,
+      detail: s.jarvisLine || s.nextAction || "",
+      stationId: s.stationId,
+    }));
+  }
+  if (journey.length && companionStep >= 4) {
+    // After Delco Soft Ask chapters, show full journey on whiteboard
+    return journey.map((s) => ({
+      id: s.id,
+      label: s.label,
+      detail: s.jarvisLine || s.nextAction || "",
+      stationId: s.stationId,
+    }));
+  }
+  return WHITEBOARD_STEPS;
+}
+
+function journeyActiveIndex() {
+  const active = activeCompanionStep();
+  const journey = getSalesJourney();
+  if (!active?.journeyId || !journey.length) {
+    // Map companionStep offset onto journey when in journey intro/closing
+    if (companionStep >= 5 && companionStep <= 5 + journey.length) {
+      return Math.max(0, companionStep - 5);
+    }
+    return companionStep;
+  }
+  const idx = journey.findIndex((s) => s.id === active.journeyId);
+  return idx >= 0 ? idx : 0;
+}
+
+
+function motionEnergy() {
+  if (motionMode === "gate") return 1;
+  if (motionMode === "hot") return 0.75;
+  if (motionMode === "journey") return 0.55;
+  return 0.35;
+}
+
+function resolveMotionContext() {
+  const step = activeCompanionStep();
+  const journey = getSalesJourney();
+  const job = activeJob || shopData?.jobs?.find((j) => j.id === shopData?.meta?.defaultJobId);
+  const hot = shopData?.boardSnapshot?.hot;
+
+  let mode = "softask";
+  let title = "Delco PR-0014 · Soft Ask ready";
+  let sub = "Hot job · nothing sent · AI OFF";
+  let chip = "Soft Ask · Delco PR-0014";
+  let progress = 0;
+  let statusHint = "briefing Delco";
+
+  const steps = getCompanionSteps();
+  const total = Math.max(1, steps.length);
+  progress = Math.round(((companionStep + 1) / total) * 100);
+
+  if (step?.journeyId) {
+    mode = "journey";
+    const j = journey.find((x) => x.id === step.journeyId);
+    title = j ? `Journey ${j.order}/9 — ${j.label}` : step.title || "Sales journey";
+    sub = j?.jarvisLine || step.body?.slice(0, 110) || "Walking the shop sales journey";
+    chip = j ? `Journey · ${j.label}` : "Sales journey";
+    statusHint = "journey walk";
+    const ji = journey.findIndex((x) => x.id === step.journeyId);
+    if (ji >= 0 && journey.length) progress = Math.round(((ji + 1) / journey.length) * 100);
+  } else if (step?.id === "c5") {
+    mode = "journey";
+    title = "Sales journey walkthrough";
+    sub = "Inquiry → review · click Next · AI OFF";
+    chip = "Journey map · Soft Ask name stays";
+    statusHint = "journey intro";
+  } else if (step?.tone === "gate" || step?.id === "c3") {
+    mode = "gate";
+    title = step?.title || "GO or HOLD";
+    sub = "Deck GO = stub only · no live send · Chance SEND gate";
+    chip = "Soft Ask · Chance Gate";
+    statusHint = "gate call";
+  } else if (companionStep <= 3) {
+    mode = companionStep === 0 ? "hot" : "softask";
+    title = step?.title || (job?.title || "Delco Soft Ask");
+    sub = step?.body?.slice(0, 120) || hot?.next || "Soft Ask path · AI OFF";
+    chip = "Soft Ask · Delco PR-0014";
+    statusHint = mode === "hot" ? "hot Delco" : "briefing Delco";
+  } else if (step?.id === "c15") {
+    mode = "hot";
+    title = "Back to Delco #1";
+    sub = "Soft Ask ready · GO/HOLD stubbed · AI OFF";
+    chip = "Soft Ask · Delco PR-0014";
+    statusHint = "hot Delco";
+  } else if (step) {
+    mode = "softask";
+    title = step.title || "Jarvis";
+    sub = (step.body || "").slice(0, 120);
+    chip = "Soft Ask · Delco PR-0014";
+  }
+
+  return { mode, title, sub, chip, progress, statusHint };
+}
+
+function syncMotionContext(forceRedraw) {
+  const ctx = resolveMotionContext();
+  motionMode = ctx.mode;
+  const stage = document.getElementById("holo-stage");
+  if (stage) stage.dataset.motion = ctx.mode;
+
+  const modeLabel = document.getElementById("live-mode-label");
+  const titleEl = document.getElementById("live-context-title");
+  const subEl = document.getElementById("live-context-sub");
+  const chipText = document.getElementById("softask-chip-text");
+  const fill = document.getElementById("live-progress-fill");
+  const bar = document.getElementById("live-progress");
+
+  const modeMap = { softask: "SOFT ASK", journey: "SALES JOURNEY", hot: "HOT JOB", gate: "CHANCE GATE" };
+  if (modeLabel) modeLabel.textContent = modeMap[ctx.mode] || "SOFT ASK";
+  if (titleEl) titleEl.textContent = ctx.title;
+  if (subEl) subEl.textContent = ctx.sub;
+  if (chipText) chipText.textContent = ctx.chip;
+  if (fill) fill.style.width = `${ctx.progress}%`;
+  if (bar) bar.setAttribute("aria-valuenow", String(ctx.progress));
+
+  // Status pill tracks context
+  const statusEl = document.getElementById("jarvis-status");
+  if (statusEl && jarvisOn && !jarvisListening) {
+    statusEl.textContent = ctx.statusHint;
+    statusEl.dataset.mode = "briefing";
+  }
+
+  if (forceRedraw) {
+    seedMotionParticles(true);
+    wbNeedsRedraw = true;
+    drawWhiteboard(false);
+  }
+}
+
+function seedMotionParticles(reset) {
+  const canvas = document.getElementById("live-motion");
+  if (!canvas) return;
+  const n = motionMode === "gate" ? 48 : motionMode === "journey" ? 36 : motionMode === "hot" ? 42 : 28;
+  if (!reset && motionParticles.length === n) return;
+  motionParticles = [];
+  for (let i = 0; i < n; i++) {
+    motionParticles.push({
+      a: Math.random() * Math.PI * 2,
+      r: 0.15 + Math.random() * 0.75,
+      sp: 0.4 + Math.random() * 1.4,
+      sz: 1 + Math.random() * 2.5,
+      phase: Math.random() * Math.PI * 2,
+    });
+  }
+}
+
+function ensureLiveMotionCanvas() {
+  const canvas = document.getElementById("live-motion");
+  const stage = document.getElementById("holo-stage");
+  if (!canvas || !stage) return null;
+  const w = stage.clientWidth || 800;
+  const h = stage.clientHeight || 500;
+  if (canvas.width !== w || canvas.height !== h) {
+    canvas.width = w;
+    canvas.height = h;
+    seedMotionParticles(true);
+  }
+  liveMotionReady = true;
+  return canvas;
+}
+
+function motionPalette() {
+  if (motionMode === "journey") return { a: "rgba(85,239,196,", b: "rgba(129,236,236,", ring: "rgba(85,239,196,0.35)" };
+  if (motionMode === "hot") return { a: "rgba(253,203,110,", b: "rgba(255,234,167,", ring: "rgba(253,203,110,0.4)" };
+  if (motionMode === "gate") return { a: "rgba(255,118,117,", b: "rgba(255,234,167,", ring: "rgba(255,118,117,0.4)" };
+  return { a: "rgba(126,200,227,", b: "rgba(168,228,255,", ring: "rgba(126,200,227,0.35)" };
+}
+
+function drawLiveMotion(t) {
+  const canvas = ensureLiveMotionCanvas();
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  const W = canvas.width;
+  const H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  if (!jarvisOn) {
+    // faint standby sweep only
+    ctx.strokeStyle = "rgba(126,200,227,0.08)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(W * 0.38, H * 0.58, 80 + Math.sin(t) * 6, 0, Math.PI * 2);
+    ctx.stroke();
+    return;
+  }
+
+  if (!motionParticles.length) seedMotionParticles(true);
+  const pal = motionPalette();
+  const energy = motionEnergy();
+  const cx = W * 0.38;
+  const cy = H * 0.55;
+
+  // Expanding rings
+  const rings = motionMode === "journey" ? 4 : 3;
+  for (let i = 0; i < rings; i++) {
+    const pulse = ((t * (0.55 + energy * 0.5) + i * 0.45) % 1);
+    const rad = 40 + pulse * (120 + energy * 80);
+    ctx.beginPath();
+    ctx.arc(cx, cy, rad, 0, Math.PI * 2);
+    ctx.strokeStyle = pal.ring.replace("0.35", String(0.28 * (1 - pulse))).replace("0.4", String(0.32 * (1 - pulse)));
+    ctx.lineWidth = 2 + energy;
+    ctx.stroke();
+  }
+
+  // Orbit particles
+  motionParticles.forEach((p) => {
+    const ang = p.a + t * p.sp * (0.6 + energy);
+    const rr = (60 + p.r * (140 + energy * 60)) * (0.85 + 0.15 * Math.sin(t * 2 + p.phase));
+    const x = cx + Math.cos(ang) * rr;
+    const y = cy + Math.sin(ang) * rr * 0.55;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, p.sz * 3);
+    g.addColorStop(0, pal.b + "0.85)");
+    g.addColorStop(1, pal.a + "0)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(x, y, p.sz * (1.2 + energy * 0.6), 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Scan beam that tracks progress
+  const steps = getCompanionSteps();
+  const frac = steps.length ? companionStep / Math.max(1, steps.length - 1) : 0;
+  const beamY = H * 0.18 + frac * H * 0.55;
+  ctx.fillStyle = pal.a + (0.06 + energy * 0.04) + ")";
+  ctx.fillRect(0, beamY, W, 18);
+  ctx.fillStyle = pal.b + "0.2)";
+  ctx.fillRect(0, beamY + 6, W * (0.25 + frac * 0.6), 3);
+
+  // Corner ticks
+  ctx.strokeStyle = pal.a + "0.45)";
+  ctx.lineWidth = 1.5;
+  const tick = 18;
+  [[12, 12], [W - 12, 12], [12, H - 12], [W - 12, H - 12]].forEach(([x, y], i) => {
+    const dx = i % 2 === 0 ? 1 : -1;
+    const dy = i < 2 ? 1 : -1;
+    ctx.beginPath();
+    ctx.moveTo(x, y + dy * tick);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x + dx * tick, y);
+    ctx.stroke();
+  });
+}
+
 
 function typeReveal(el, fullText, onDone) {
   if (!el) {
@@ -900,9 +1199,16 @@ function setJarvisStatus(mode) {
 function syncJarvisBrief() {
   const brief = document.getElementById("jarvis-brief");
   if (!brief) return;
-  const line =
+  const step = activeCompanionStep();
+  let line =
     JARVIS_BRIEFS[Math.max(0, Math.min(companionStep, JARVIS_BRIEFS.length - 1))] ||
     "Soft Ask path ready when you are.";
+  if (step?.journeyId) {
+    const j = getSalesJourney().find((x) => x.id === step.journeyId);
+    line = j?.jarvisLine || step.title || line;
+  } else if (step?.title && companionStep >= 4) {
+    line = step.title + " — click Next to keep walking.";
+  }
   if (jarvisOn) {
     setJarvisStatus(jarvisListening ? "listening" : "briefing");
     typeReveal(brief, line);
@@ -1067,6 +1373,7 @@ function renderCompanion(force) {
   syncNextAction();
   syncJarvisBrief();
   syncWhiteboardToStep();
+  syncMotionContext(!!force);
   if (force && jarvisOn) setJarvisStatus(jarvisListening ? "listening" : "briefing");
 }
 
@@ -1079,7 +1386,7 @@ function companionNext() {
     renderCompanion(true);
     if (jarvisOn) playJarvisBeep();
   } else {
-    showToast("End of Delco Soft Ask path — GO/HOLD still stubbed");
+    showToast("End of Soft Ask + sales journey — GO/HOLD still stubbed · AI OFF");
   }
 }
 
@@ -1238,7 +1545,10 @@ function wireSimpleUi() {
         openJob(job);
         wbMode = 0;
         drawWhiteboard(true);
-        showToast("Delco focused — Soft Ask #1");
+        companionStep = 0;
+        renderCompanion(true);
+        syncMotionContext(true);
+        showToast("Delco focused — Soft Ask #1 · live motion");
       }
     });
   }
@@ -1285,7 +1595,7 @@ async function main() {
   wireCompanionControls();
   wireSimpleUi();
   applyJarvisMode();
-  setStepsOpen(false);
+  setStepsOpen(true);
   setDetailExtrasOpen(false);
   setBoardOpen(false);
   if (detailPanel) detailPanel.classList.add("hidden");
@@ -1313,14 +1623,16 @@ async function main() {
   }
 
   populateUI();
-  renderCompanion(false);
+  renderCompanion(true);
   applyJarvisMode();
   syncOpsMeters();
   focusDelcoOnLoad();
+  syncMotionContext(true);
   drawWhiteboard(true);
+  ensureLiveMotionCanvas();
   showToast(
     jarvisOn
-      ? `${VERSION_TAG} — hologram ON · Delco Soft Ask · AI OFF · no live send`
+      ? `${VERSION_TAG} — live motion ON · Delco Soft Ask + journey · AI OFF · no live send`
       : `${VERSION_TAG} — tap JARVIS to wake hologram · AI OFF · no live send`
   );
 }

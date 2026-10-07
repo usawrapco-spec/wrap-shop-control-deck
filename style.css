@@ -770,3 +770,143 @@ body:not(.jarvis-on) #holo-stage::after {
   .brand h1 { font-size: 0.65rem; }
   .tagline { display: none; }
 }
+
+
+/* ——— Live motion + context HUD (reacts to Soft Ask / journey / hot job) ——— */
+.live-motion {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  mix-blend-mode: screen;
+  opacity: 0.85;
+}
+body:not(.jarvis-on) .live-motion { opacity: 0.25; }
+
+#holo-stage[data-motion="softask"] {
+  --motion-accent: #7ec8e3;
+  --motion-accent-2: #a8e4ff;
+}
+#holo-stage[data-motion="journey"] {
+  --motion-accent: #55efc4;
+  --motion-accent-2: #81ecec;
+}
+#holo-stage[data-motion="hot"] {
+  --motion-accent: #ffeaa7;
+  --motion-accent-2: #fdcb6e;
+}
+#holo-stage[data-motion="gate"] {
+  --motion-accent: #ff7675;
+  --motion-accent-2: #ffeaa7;
+}
+
+.live-context {
+  margin-top: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  background: rgba(4, 12, 18, 0.72);
+  box-shadow: 0 0 24px rgba(126, 200, 227, 0.12);
+  backdrop-filter: blur(6px);
+  max-width: 100%;
+  pointer-events: none;
+}
+#holo-stage[data-motion="journey"] .live-context {
+  border-color: rgba(85, 239, 196, 0.45);
+  box-shadow: 0 0 28px rgba(85, 239, 196, 0.15);
+}
+#holo-stage[data-motion="hot"] .live-context {
+  border-color: rgba(253, 203, 110, 0.5);
+  box-shadow: 0 0 28px rgba(253, 203, 110, 0.18);
+}
+#holo-stage[data-motion="gate"] .live-context {
+  border-color: rgba(255, 118, 117, 0.45);
+  animation: gate-glow 1.6s ease-in-out infinite;
+}
+@keyframes gate-glow {
+  0%, 100% { box-shadow: 0 0 16px rgba(255, 118, 117, 0.15); }
+  50% { box-shadow: 0 0 28px rgba(255, 118, 117, 0.35); }
+}
+
+.live-context-mode {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  color: var(--cyan-bright);
+  margin-bottom: 6px;
+}
+#holo-stage[data-motion="journey"] .live-context-mode { color: #55efc4; }
+#holo-stage[data-motion="hot"] .live-context-mode { color: #fdcb6e; }
+#holo-stage[data-motion="gate"] .live-context-mode { color: #ff7675; }
+
+.live-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+  animation: live-pulse 1.1s ease-in-out infinite;
+}
+@keyframes live-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.45); opacity: 0.45; }
+}
+
+.live-context-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+  min-height: 1.3em;
+}
+.live-context-sub {
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: var(--ink-dim);
+  line-height: 1.35;
+  min-height: 1.35em;
+}
+.live-progress {
+  margin-top: 10px;
+  height: 4px;
+  background: rgba(126, 200, 227, 0.12);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.live-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--motion-accent, #7ec8e3), var(--motion-accent-2, #a8e4ff));
+  box-shadow: 0 0 12px var(--motion-accent, #7ec8e3);
+  transition: width 0.35s ease;
+  border-radius: 2px;
+}
+
+/* Companion panel: never look empty */
+.companion-feed:empty::before {
+  content: "Loading Jarvis walkthrough…";
+  display: block;
+  padding: 16px;
+  color: var(--ink-dim);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+.companion-bubble.tone-journey { border-left: 3px solid #55efc4; }
+.companion-bubble.tone-schedule { border-left: 3px solid #81ecec; }
+.companion-bubble.tone-install { border-left: 3px solid #00b894; }
+.companion-bubble.tone-pay { border-left: 3px solid #55efc4; }
+.companion-bubble.tone-review { border-left: 3px solid #ffeaa7; }
+.companion-bubble.tone-quote { border-left: 3px solid #fdcb6e; }
+
+#holo-stage[data-motion="journey"] .holo-softask-chip {
+  border-color: rgba(85, 239, 196, 0.4);
+  color: #55efc4;
+}
+#holo-stage[data-motion="hot"] .holo-softask-chip {
+  border-color: rgba(253, 203, 110, 0.45);
+  color: #fdcb6e;
+}

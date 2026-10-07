@@ -1,4 +1,4 @@
-# USA Wrap Co Control Deck v0.9-hologram
+# USA Wrap Co Control Deck v0.9.1-journey
 
 Stupid-simple **command station** for Chance — sits beside Wrapstart while you walk the **Delco PR-0014** Soft Ask.
 
@@ -53,7 +53,8 @@ Open **http://localhost:8878/** beside Wrapstart.
 - `app.js` — Three.js hologram + CanvasTexture whiteboard + GO/HOLD stubs
 - `style.css` — vault HUD, center stage, dock
 - `assets/wrap-guy-pointing.png` — stylized pointing wrap-guy hologram texture (no usable ad photo found on disk)
-- `data/shop-brain.json` — lanes, Delco job, boardSnapshot, companion script
+- `data/shop-brain.json` — lanes, Delco job, boardSnapshot, salesJourney, companion script
+- `JOURNEY.md` — sales journey + live motion walkthrough
 - `README.md` — this file
 
-Evolved from v0.8.1-jarvis · v0.7-vault · v0.4-simple dock kept.
+Evolved from v0.9-hologram · v0.8.1-jarvis · v0.7-vault · v0.4-simple dock kept.
