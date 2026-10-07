@@ -1,23 +1,24 @@
 {
   "meta": {
     "title": "USA Wrap Co Control Deck",
-    "subtitle": "Vault HUD \u00b7 Jarvis / Grok hub \u00b7 Delco Soft Ask \u00b7 AI OFF \u00b7 no live send",
+    "subtitle": "Vault HUD \u00b7 Cortana-feel hologram wrap-guy \u00b7 Soft Ask whiteboard \u00b7 AI OFF \u00b7 no live send",
     "date": "2026-10-06",
     "owner": "Chance Wallace",
     "mission": "Delco #1 Soft Ask (call + email) \u00b7 HOLD auto-send \u00b7 11 waiting Chance GO \u00b7 outbound paused \u00b7 AI OFF",
     "aiEngage": "off",
     "answerCalls": "off",
-    "controlSpec": "v0.8.1-jarvis",
-    "version": "0.8.1-jarvis",
+    "controlSpec": "v0.9-hologram",
+    "version": "0.9-hologram",
     "defaultJobId": "job-delco-pr0014",
     "delcoStallHours": 48,
     "jarvis": {
       "name": "Jarvis",
       "voice": "Grok Bot",
-      "body": "Control Deck UI \u00b7 whiteboard Soft Ask walkthrough",
+      "body": "Three.js hologram wrap-guy + whiteboard Soft Ask / jobs / email draft",
       "hubLabel": "Jarvis \u00b7 Grok hub",
       "defaultOn": true,
-      "beepMutedDefault": true
+      "beepMutedDefault": true,
+      "look": "cyan/white hologram scanlines \u00b7 pointing wrap-guy \u00b7 not Cortana costume"
     }
   },
   "lanes": [
@@ -558,13 +559,13 @@
       "phase": "0",
       "emoji": "\ud83e\uddea",
       "title": "Now \u2014 Train OFF",
-      "blurb": "Receptionist + Lead trained in Wrapstart. Engage OFF. Answer Off. Control Deck = Jarvis body \u00b7 Delco Soft Ask whiteboard. Jarvis (Grok hub) drafts \u2014 you GO."
+      "blurb": "Receptionist + Lead trained in Wrapstart. Engage OFF. Answer Off. Control Deck = hologram body \u00b7 Soft Ask whiteboard. Jarvis (Grok hub) drafts \u2014 you GO."
     },
     {
       "phase": "1",
       "emoji": "\ud83e\udde0",
-      "title": "Control deck v0.6-brain",
-      "blurb": "Vault mission rail + brain thoughts: What\u2019s hot, what to do next, GO/HOLD. Think path in plain English. AI OFF. No live send. No game layer."
+      "title": "Control deck v0.9-hologram",
+      "blurb": "Center-stage hologram wrap-guy + whiteboard: Soft Ask steps, job cards, Delco email draft. Dock = What\u2019s hot / next / GO HOLD. AI OFF. No live send."
     },
     {
       "phase": "2",

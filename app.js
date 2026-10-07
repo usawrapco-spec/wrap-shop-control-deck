@@ -1,12 +1,14 @@
+import * as THREE from "three";
+
 const FEEDBACK_KEY = "wrapShopControlDeckFeedback_v03";
 const STUB_TOAST_GO = "Queued for Chance — no live send";
 const STUB_TOAST_HOLD = "Parked — HOLD queued for Chance";
 const DATA_URL = "./data/shop-brain.json";
-const VERSION_TAG = "v0.8.1-jarvis";
-const JARVIS_KEY = "wrapShopControlDeckJarvis_v08";
-const JARVIS_MUTE_KEY = "wrapShopControlDeckJarvisMute_v08";
+const VERSION_TAG = "v0.9-hologram";
+const JARVIS_KEY = "wrapShopControlDeckJarvis_v09";
+const JARVIS_MUTE_KEY = "wrapShopControlDeckJarvisMute_v09";
+const WRAP_GUY_URL = "./assets/wrap-guy-pointing.png";
 
-/** Soft Ask whiteboard path — lights up as Jarvis briefs */
 const WHITEBOARD_STEPS = [
   { id: "wb1", label: "Soft Ask ready", detail: "Warm call + proposal link · Fixed / Folding pretax · nothing sent" },
   { id: "wb2", label: "Why tonight", detail: "Competitors in play · ~48h stall · Delco is the close that moves first" },
@@ -14,7 +16,6 @@ const WHITEBOARD_STEPS = [
   { id: "wb4", label: "If they accept", detail: "50% deposit invoice → then Design · no free art on a handshake" },
 ];
 
-/** One-line Jarvis briefings per Soft Ask step */
 const JARVIS_BRIEFS = [
   "Briefing Delco — Soft Ask draft is ready. Nothing sent. AI OFF.",
   "Competitors already in play. Stall clock ~48h. Delco first.",
@@ -22,99 +23,524 @@ const JARVIS_BRIEFS = [
   "Accept path — 50% deposit, then Design. Soft Ask name stays.",
 ];
 
-/** Pipeline stages for the vault mission rail */
-const RAIL_STAGES = [
-  { id: "lead", label: "Lead" },
-  { id: "quote", label: "Quote" },
-  { id: "soft-ask", label: "Soft Ask" },
-  { id: "accept", label: "Accept" },
-  { id: "deposit", label: "Deposit" },
-  { id: "install", label: "Install" },
-];
+const DELCO_EMAIL_DRAFT = {
+  to: "Puneet @ Delco Transport",
+  subject: "Soft Ask — PR-0014 Fixed / Folding options",
+  body: [
+    "Hey Puneet —",
+    "",
+    "Quick Soft Ask on PR-0014.",
+    "Fixed bay $29,807 pretax · Folding $44,232 pretax.",
+    "Two install windows ready once you're set.",
+    "",
+    "No pressure — happy to walk numbers on a call.",
+    "— USA Wrap Co · Gig Harbor",
+  ],
+};
 
 /** @type {any} */
 let shopData = null;
 /** @type {Array} */
 let feedbackStore = loadFeedback();
+let companionStep = 0;
+let companionRevealed = 0;
+/** @type {any} */
+let activeJob = null;
+/** @type {any} */
+let activeStep = null;
+let jarvisOn = loadJarvisOn();
+let jarvisMuted = loadJarvisMuted();
+let jarvisListening = false;
+let jarvisStatusMode = "standby";
+let typeTimer = null;
+let toastTimer = null;
+/** @type {any} */
+let speechRec = null;
+let wbMode = 0; // 0 soft ask · 1 jobs · 2 email
+let wbDrawProgress = 0;
+let wbNeedsRedraw = true;
 
-const tooltip = document.getElementById("tooltip");
+const toast = document.getElementById("toast");
 const detailPanel = document.getElementById("detail-panel");
 const thinkPathEl = document.getElementById("think-path");
 const detailHeader = document.getElementById("detail-header");
 const confidenceMeter = document.getElementById("confidence-meter");
-const feedbackModal = document.getElementById("feedback-modal");
 const fbText = document.getElementById("fb-text");
-const fbStepLabel = document.getElementById("fb-step-label");
-const toast = document.getElementById("toast");
 
-let activeJob = null;
-let activeStep = null;
-let toastTimer = null;
-let companionStep = 0;
-let companionRevealed = 0;
-/** @type {string} */
-let activeStageId = "soft-ask";
-/** Jarvis mode — Grok Bot is the voice; deck UI is the body */
-let jarvisOn = loadJarvisOn();
-let jarvisMuted = loadJarvisMuted();
-let jarvisListening = false;
-/** @type {number|null} */
-let typeTimer = null;
-/** @type {SpeechRecognition|null} */
-let speechRec = null;
-let jarvisStatusMode = "standby"; // standby | listening | briefing
+/* ========== Three.js hologram stage ========== */
+const holo = {
+  ready: false,
+  renderer: null,
+  scene: null,
+  camera: null,
+  figureRoot: null,
+  figureMesh: null,
+  whiteboardMesh: null,
+  wbCanvas: null,
+  wbCtx: null,
+  wbTexture: null,
+  pedestal: null,
+  clock: new THREE.Clock(),
+  scanUniforms: null,
+};
 
-function jobNeedsChance(job) {
-  if (!job) return false;
-  const s = job.status || "";
-  return s === "close-prep" || s === "ready" || s === "pending-send" || s === "hold" || !!job.id?.includes("delco");
-}
+function initHologram() {
+  const canvas = document.getElementById("holo-canvas");
+  const stage = document.getElementById("holo-stage");
+  const fallback = document.getElementById("holo-fallback");
+  if (!canvas || !stage) return;
 
-function moneyLine(job) {
-  if (job?.pricing) {
-    return `Fixed $${Number(job.pricing.fixedPretax).toLocaleString()} · Folding $${Number(job.pricing.foldingPretax).toLocaleString()} pretax`;
+  try {
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setClearColor(0x000000, 0);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x050607, 0.045);
+
+    const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+    camera.position.set(0.35, 1.55, 5.2);
+    camera.lookAt(0.15, 1.15, 0);
+
+    const hemi = new THREE.HemisphereLight(0xa8e4ff, 0x0a1018, 0.55);
+    scene.add(hemi);
+    const key = new THREE.DirectionalLight(0xb8e8ff, 1.15);
+    key.position.set(2.5, 4, 3);
+    scene.add(key);
+    const rim = new THREE.PointLight(0x5ec8ff, 1.4, 12);
+    rim.position.set(-2.2, 2.2, -1.5);
+    scene.add(rim);
+    const floorGlow = new THREE.PointLight(0x7ec8e3, 0.8, 8);
+    floorGlow.position.set(0, 0.2, 0.5);
+    scene.add(floorGlow);
+
+    // Floor ring / pedestal
+    const pedestal = new THREE.Group();
+    const ring = new THREE.Mesh(
+      new THREE.TorusGeometry(1.15, 0.025, 12, 64),
+      new THREE.MeshBasicMaterial({ color: 0x7ec8e3, transparent: true, opacity: 0.55 })
+    );
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = 0.02;
+    pedestal.add(ring);
+    const ring2 = new THREE.Mesh(
+      new THREE.TorusGeometry(0.85, 0.012, 10, 48),
+      new THREE.MeshBasicMaterial({ color: 0xa8e4ff, transparent: true, opacity: 0.35 })
+    );
+    ring2.rotation.x = Math.PI / 2;
+    ring2.position.y = 0.04;
+    pedestal.add(ring2);
+    const disc = new THREE.Mesh(
+      new THREE.CircleGeometry(1.05, 48),
+      new THREE.MeshBasicMaterial({
+        color: 0x0a3040,
+        transparent: true,
+        opacity: 0.45,
+        side: THREE.DoubleSide,
+      })
+    );
+    disc.rotation.x = -Math.PI / 2;
+    disc.position.y = 0.01;
+    pedestal.add(disc);
+    scene.add(pedestal);
+
+    // Soft volumetric cone (Cortana-ish beam)
+    const beamMat = new THREE.MeshBasicMaterial({
+      color: 0x5ec8ff,
+      transparent: true,
+      opacity: 0.06,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+    });
+    const beam = new THREE.Mesh(new THREE.ConeGeometry(1.4, 3.6, 32, 1, true), beamMat);
+    beam.position.y = 1.8;
+    beam.rotation.x = Math.PI;
+    scene.add(beam);
+
+    // Figure root
+    const figureRoot = new THREE.Group();
+    figureRoot.position.set(-0.55, 0, 0);
+    scene.add(figureRoot);
+
+    // Whiteboard plane in front of him
+    const wbCanvas = document.createElement("canvas");
+    wbCanvas.width = 1024;
+    wbCanvas.height = 640;
+    const wbCtx = wbCanvas.getContext("2d");
+    const wbTexture = new THREE.CanvasTexture(wbCanvas);
+    wbTexture.colorSpace = THREE.SRGBColorSpace;
+    wbTexture.minFilter = THREE.LinearFilter;
+    wbTexture.magFilter = THREE.LinearFilter;
+
+    const wbMat = new THREE.MeshStandardMaterial({
+      map: wbTexture,
+      emissive: 0x3a90b0,
+      emissiveMap: wbTexture,
+      emissiveIntensity: 0.55,
+      roughness: 0.55,
+      metalness: 0.15,
+      transparent: true,
+      opacity: 0.96,
+    });
+    const whiteboardMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.62), wbMat);
+    whiteboardMesh.position.set(1.15, 1.45, 0.55);
+    whiteboardMesh.rotation.y = -0.32;
+    scene.add(whiteboardMesh);
+
+    // Whiteboard frame
+    const frame = new THREE.Mesh(
+      new THREE.PlaneGeometry(2.72, 1.74),
+      new THREE.MeshBasicMaterial({ color: 0x7ec8e3, transparent: true, opacity: 0.22 })
+    );
+    frame.position.copy(whiteboardMesh.position);
+    frame.position.z -= 0.02;
+    frame.rotation.copy(whiteboardMesh.rotation);
+    scene.add(frame);
+
+    holo.renderer = renderer;
+    holo.scene = scene;
+    holo.camera = camera;
+    holo.figureRoot = figureRoot;
+    holo.whiteboardMesh = whiteboardMesh;
+    holo.wbCanvas = wbCanvas;
+    holo.wbCtx = wbCtx;
+    holo.wbTexture = wbTexture;
+    holo.pedestal = pedestal;
+    holo.ready = true;
+
+    loadWrapGuy(figureRoot);
+    resizeHolo();
+    window.addEventListener("resize", resizeHolo);
+    drawWhiteboard(true);
+    animateHolo();
+  } catch (err) {
+    console.error("Hologram init failed", err);
+    if (fallback) fallback.hidden = false;
   }
-  if (job?.id?.includes("delco")) return "Fixed $29,807 · Folding $44,232 pretax · Soft Ask ready";
-  if (job?.status === "pending-send") return "Proposal scrubbed · waiting Chance";
-  if (job?.type === "practice") return "Sandbox only · wallco92";
-  return job?.summary?.slice(0, 80) || "";
 }
 
-function nextActionForJob(job, stepIndex) {
-  if (!job) return "Pick a job on the rail or Board.";
-  if (job.boardNext && (stepIndex || 0) === 0) return `Next: ${job.boardNext}`;
-  if (job.id?.includes("delco")) {
-    const lines = [
-      "Next: Soft Ask Delco — call + email, then Mark Sent. HOLD auto-send.",
-      "Next: You decide — GO queues Soft Ask for Chance, or HOLD parks it.",
-      "Next: GO is queue-only tonight. Real send stays in Wrapstart.",
-      "Next: After they accept — take 50% deposit, then design.",
-    ];
-    const i = Math.max(0, Math.min(stepIndex || 0, lines.length - 1));
-    return lines[i];
-  }
-  if (job.status === "pending-send") return "Next: Review packet, then GO when ready (stub queues only).";
-  if (job.status === "hold") return "Next: Unblock HOLD — check margin / scope, then re-queue.";
-  if (job.status === "active" && job.type === "wrap") return "Next: Finish Soft Ask draft, Margin Guard, park at Chance Gate.";
-  if (job.type === "dekwave") return "Next: Soft Ask ballpark on DekWave — deposit before design.";
-  if (job.status === "practice") return "Next: Practice on wallco92 only — never touch real customers.";
-  const step = (job.thinkPath || [])[0];
-  return step ? `Next: ${step.label}` : `Next: Open ${job.title.split("—")[0].trim()}`;
+function loadWrapGuy(figureRoot) {
+  const loader = new THREE.TextureLoader();
+  loader.load(
+    WRAP_GUY_URL,
+    (tex) => {
+      tex.colorSpace = THREE.SRGBColorSpace;
+      const aspect = 768 / 1280;
+      const h = 2.55;
+      const w = h * aspect;
+
+      const mat = new THREE.MeshBasicMaterial({
+        map: tex,
+        transparent: true,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        opacity: 0.92,
+      });
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+      mesh.position.set(0, h / 2 + 0.05, 0);
+      figureRoot.add(mesh);
+
+      // Soft duplicate for holographic double-exposure
+      const ghostMat = mat.clone();
+      ghostMat.opacity = 0.22;
+      const ghost = new THREE.Mesh(new THREE.PlaneGeometry(w * 1.04, h * 1.04), ghostMat);
+      ghost.position.set(0.04, h / 2 + 0.05, -0.08);
+      figureRoot.add(ghost);
+
+      holo.figureMesh = mesh;
+      holo.figureGhost = ghost;
+    },
+    undefined,
+    () => {
+      // Procedural fallback figure if texture missing
+      const g = new THREE.Group();
+      const mat = new THREE.MeshStandardMaterial({
+        color: 0xa8e4ff,
+        emissive: 0x3a90b0,
+        emissiveIntensity: 0.6,
+        transparent: true,
+        opacity: 0.75,
+        roughness: 0.4,
+      });
+      const torso = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.85, 0.28), mat);
+      torso.position.y = 1.35;
+      g.add(torso);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), mat);
+      head.position.y = 2.0;
+      g.add(head);
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.14, 0.14), mat);
+      arm.position.set(0.55, 1.55, 0.1);
+      arm.rotation.z = -0.25;
+      g.add(arm);
+      figureRoot.add(g);
+      holo.figureMesh = g;
+    }
+  );
 }
 
-function syncOpsMeters() {
-  const need = document.getElementById("meter-need-you");
-  const delco = document.getElementById("meter-delco");
-  if (!shopData) return;
-  const snap = shopData.boardSnapshot;
-  const needing = snap?.sendReadyWaitingChanceGO
-    ?? shopData.jobs.filter((j) => jobNeedsChance(j)).length;
-  if (need) need.textContent = String(needing);
-  if (delco) {
-    const stall = (shopData.meta && shopData.meta.delcoStallHours) || 48;
-    delco.textContent = `~${stall}h stall`;
+function resizeHolo() {
+  if (!holo.ready) return;
+  const stage = document.getElementById("holo-stage");
+  if (!stage) return;
+  const w = stage.clientWidth || 1;
+  const h = stage.clientHeight || 1;
+  holo.renderer.setSize(w, h, false);
+  holo.camera.aspect = w / h;
+  holo.camera.updateProjectionMatrix();
+}
+
+function animateHolo() {
+  if (!holo.ready) return;
+  requestAnimationFrame(animateHolo);
+  const t = holo.clock.getElapsedTime();
+
+  if (holo.figureRoot && jarvisOn) {
+    holo.figureRoot.position.y = Math.sin(t * 1.4) * 0.04;
+    holo.figureRoot.rotation.y = Math.sin(t * 0.55) * 0.08;
+    if (holo.figureGhost) {
+      holo.figureGhost.material.opacity = 0.14 + Math.sin(t * 3.2) * 0.08;
+    }
+    if (holo.figureMesh?.material && holo.figureMesh.material.map) {
+      holo.figureMesh.material.opacity = 0.82 + Math.sin(t * 2.1) * 0.1;
+    }
+  } else if (holo.figureRoot && !jarvisOn) {
+    holo.figureRoot.position.y = 0;
+    if (holo.figureMesh?.material) holo.figureMesh.material.opacity = 0.25;
+  }
+
+  if (holo.pedestal) {
+    holo.pedestal.rotation.y = t * 0.35;
+  }
+
+  if (holo.whiteboardMesh && jarvisOn) {
+    holo.whiteboardMesh.position.y = 1.45 + Math.sin(t * 0.9) * 0.02;
+  }
+
+  // Drawing animation
+  if (jarvisOn) {
+    wbDrawProgress = Math.min(1, wbDrawProgress + 0.008);
+    if (wbDrawProgress < 1 || wbNeedsRedraw) {
+      drawWhiteboard(false);
+      wbNeedsRedraw = false;
+    }
+  }
+
+  holo.renderer.render(holo.scene, holo.camera);
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawWhiteboard(resetDraw) {
+  if (!holo.wbCtx) return;
+  if (resetDraw) wbDrawProgress = 0;
+  const ctx = holo.wbCtx;
+  const W = holo.wbCanvas.width;
+  const H = holo.wbCanvas.height;
+  const p = wbDrawProgress;
+
+  // Board surface
+  ctx.fillStyle = "#0a1218";
+  ctx.fillRect(0, 0, W, H);
+  // subtle grid
+  ctx.strokeStyle = "rgba(126,200,227,0.08)";
+  ctx.lineWidth = 1;
+  for (let x = 40; x < W; x += 40) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, H);
+    ctx.stroke();
+  }
+  for (let y = 40; y < H; y += 40) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y);
+    ctx.stroke();
+  }
+
+  // Header bar
+  ctx.fillStyle = "rgba(126,200,227,0.12)";
+  ctx.fillRect(0, 0, W, 56);
+  ctx.fillStyle = "#7ec8e3";
+  ctx.font = "600 22px 'IBM Plex Mono', monospace";
+  const headers = ["WHITEBOARD // SOFT ASK", "WHITEBOARD // JOBS", "WHITEBOARD // EMAIL DRAFT"];
+  ctx.fillText(headers[wbMode] || headers[0], 28, 36);
+  ctx.fillStyle = "#8a96a3";
+  ctx.font = "500 16px 'IBM Plex Mono', monospace";
+  ctx.fillText("Delco PR-0014 · AI OFF · no live send", W - 420, 36);
+
+  // Animated draw underscore
+  ctx.strokeStyle = "rgba(168,228,255,0.7)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(28, 58);
+  ctx.lineTo(28 + (W - 56) * Math.min(1, p * 1.4), 58);
+  ctx.stroke();
+
+  if (wbMode === 0) drawWbSoftAsk(ctx, W, H, p);
+  else if (wbMode === 1) drawWbJobs(ctx, W, H, p);
+  else drawWbEmail(ctx, W, H, p);
+
+  // Scanlines
+  ctx.fillStyle = "rgba(0,0,0,0.12)";
+  for (let y = 0; y < H; y += 3) ctx.fillRect(0, y, W, 1);
+
+  if (holo.wbTexture) holo.wbTexture.needsUpdate = true;
+}
+
+function drawWbSoftAsk(ctx, W, H, p) {
+  const steps = WHITEBOARD_STEPS;
+  const startY = 90;
+  steps.forEach((s, idx) => {
+    const reveal = Math.max(0, Math.min(1, (p - idx * 0.18) / 0.35));
+    if (reveal <= 0) return;
+    const y = startY + idx * 120;
+    const active = idx === companionStep;
+    const done = idx < companionStep;
+
+    ctx.globalAlpha = reveal;
+    // card
+    ctx.fillStyle = active ? "rgba(126,200,227,0.16)" : "rgba(20,28,34,0.9)";
+    roundRect(ctx, 36, y, W - 72, 100, 4);
+    ctx.fill();
+    ctx.strokeStyle = active ? "rgba(168,228,255,0.7)" : "rgba(126,200,227,0.25)";
+    ctx.lineWidth = active ? 2 : 1;
+    ctx.stroke();
+
+    // number circle
+    ctx.beginPath();
+    ctx.arc(86, y + 50, 26, 0, Math.PI * 2);
+    ctx.fillStyle = done ? "rgba(107,207,142,0.35)" : active ? "rgba(126,200,227,0.35)" : "rgba(60,80,90,0.5)";
+    ctx.fill();
+    ctx.fillStyle = done ? "#6bcf8e" : "#a8e4ff";
+    ctx.font = "700 22px 'IBM Plex Mono', monospace";
+    ctx.textAlign = "center";
+    ctx.fillText(String(idx + 1), 86, y + 58);
+    ctx.textAlign = "left";
+
+    // drawing line animation
+    if (active) {
+      ctx.strokeStyle = "rgba(168,228,255,0.85)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(128, y + 78);
+      ctx.lineTo(128 + (W - 220) * reveal, y + 78);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = "#e8edf2";
+    ctx.font = "600 26px 'IBM Plex Sans', sans-serif";
+    ctx.fillText(s.label, 130, y + 42);
+    ctx.fillStyle = "#8a96a3";
+    ctx.font = "400 18px 'IBM Plex Sans', sans-serif";
+    ctx.fillText(s.detail.slice(0, Math.floor(s.detail.length * reveal)), 130, y + 72);
+    ctx.globalAlpha = 1;
+  });
+}
+
+function drawWbJobs(ctx, W, H, p) {
+  const rows = boardRows().slice(0, 5);
+  rows.forEach((r, idx) => {
+    const reveal = Math.max(0, Math.min(1, (p - idx * 0.12) / 0.3));
+    if (reveal <= 0) return;
+    const y = 88 + idx * 95;
+    ctx.globalAlpha = reveal;
+    const hot = idx === 0;
+    ctx.fillStyle = hot ? "rgba(126,200,227,0.14)" : "rgba(16,22,28,0.92)";
+    roundRect(ctx, 36, y, W - 72, 82, 4);
+    ctx.fill();
+    ctx.strokeStyle = hot ? "rgba(168,228,255,0.65)" : "rgba(126,200,227,0.2)";
+    ctx.stroke();
+
+    ctx.fillStyle = "#7ec8e3";
+    ctx.font = "700 20px 'IBM Plex Mono', monospace";
+    ctx.fillText(`#${r.rank}`, 56, y + 34);
+    ctx.fillStyle = "#e8edf2";
+    ctx.font = "600 24px 'IBM Plex Sans', sans-serif";
+    ctx.fillText(`${r.who} · ${r.id}`, 120, y + 34);
+    ctx.fillStyle = "#8a96a3";
+    ctx.font = "400 17px 'IBM Plex Sans', sans-serif";
+    const next = String(r.next || "");
+    ctx.fillText(next.slice(0, Math.floor(next.length * reveal)), 120, y + 62);
+    ctx.globalAlpha = 1;
+  });
+  if (!rows.length) {
+    ctx.fillStyle = "#8a96a3";
+    ctx.font = "400 22px 'IBM Plex Sans', sans-serif";
+    ctx.fillText("Board snapshot loading…", 48, 140);
   }
 }
+
+function drawWbEmail(ctx, W, H, p) {
+  const d = DELCO_EMAIL_DRAFT;
+  ctx.globalAlpha = Math.min(1, p * 1.5);
+  ctx.fillStyle = "rgba(16,22,28,0.95)";
+  roundRect(ctx, 36, 88, W - 72, H - 130, 4);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(168,228,255,0.45)";
+  ctx.stroke();
+
+  ctx.fillStyle = "#7ec8e3";
+  ctx.font = "600 18px 'IBM Plex Mono', monospace";
+  ctx.fillText("PREVIEW · not sent · Soft Ask", 56, 120);
+
+  ctx.fillStyle = "#8a96a3";
+  ctx.font = "500 17px 'IBM Plex Mono', monospace";
+  ctx.fillText(`To: ${d.to}`, 56, 160);
+  ctx.fillStyle = "#e8edf2";
+  ctx.font = "600 22px 'IBM Plex Sans', sans-serif";
+  ctx.fillText(`Subj: ${d.subject}`, 56, 195);
+
+  // draw lines as if writing
+  ctx.strokeStyle = "rgba(126,200,227,0.35)";
+  ctx.beginPath();
+  ctx.moveTo(56, 215);
+  ctx.lineTo(W - 56, 215);
+  ctx.stroke();
+
+  ctx.fillStyle = "#c8d2dc";
+  ctx.font = "400 20px 'IBM Plex Sans', sans-serif";
+  let y = 250;
+  const visibleLines = Math.floor(d.body.length * Math.min(1, p * 1.2));
+  for (let i = 0; i < visibleLines; i++) {
+    const line = d.body[i];
+    const chars = Math.floor(line.length * Math.min(1, (p - i * 0.08) / 0.25));
+    ctx.fillText(line.slice(0, Math.max(0, chars)), 56, y);
+    y += 32;
+  }
+
+  ctx.fillStyle = "rgba(196,92,92,0.85)";
+  ctx.font = "700 16px 'IBM Plex Mono', monospace";
+  ctx.fillText("AI OFF · GO = stub only · real send in Wrapstart / Gmail", 56, H - 60);
+  ctx.globalAlpha = 1;
+}
+
+function cycleWhiteboard() {
+  wbMode = (wbMode + 1) % 3;
+  wbDrawProgress = 0;
+  wbNeedsRedraw = true;
+  drawWhiteboard(true);
+  const labels = ["Soft Ask steps", "job cards", "Delco email draft"];
+  showToast(`Whiteboard → ${labels[wbMode]}`);
+}
+
+function syncWhiteboardToStep() {
+  if (wbMode === 0) {
+    wbDrawProgress = Math.max(wbDrawProgress, 0.35 + companionStep * 0.18);
+    wbNeedsRedraw = true;
+    drawWhiteboard(false);
+  }
+}
+
+/* ========== App logic ========== */
 
 function loadFeedback() {
   try {
@@ -124,37 +550,32 @@ function loadFeedback() {
     return [];
   }
 }
-
 function saveFeedback() {
   localStorage.setItem(FEEDBACK_KEY, JSON.stringify(feedbackStore));
 }
-
 function loadJarvisOn() {
   try {
     const v = localStorage.getItem(JARVIS_KEY);
-    if (v === null) return true; // default ON — Chance: wake Jarvis unless user turned it off
+    if (v === null) return true;
     return v === "on";
   } catch {
     return true;
   }
 }
-
 function saveJarvisOn() {
   try {
     localStorage.setItem(JARVIS_KEY, jarvisOn ? "on" : "off");
   } catch { /* ignore */ }
 }
-
 function loadJarvisMuted() {
   try {
     const v = localStorage.getItem(JARVIS_MUTE_KEY);
-    if (v === null) return true; // muted by default
+    if (v === null) return true;
     return v !== "off";
   } catch {
     return true;
   }
 }
-
 function saveJarvisMuted() {
   try {
     localStorage.setItem(JARVIS_MUTE_KEY, jarvisMuted ? "on" : "off");
@@ -162,8 +583,9 @@ function saveJarvisMuted() {
 }
 
 function showToast(msg, kind) {
+  if (!toast) return;
   toast.textContent = msg;
-  toast.classList.remove("hidden", "toast-go", "toast-hold", "toast-xp");
+  toast.classList.remove("hidden", "toast-go", "toast-hold");
   if (kind === "go") toast.classList.add("toast-go");
   if (kind === "hold") toast.classList.add("toast-hold");
   clearTimeout(toastTimer);
@@ -178,39 +600,43 @@ function escapeHtml(s) {
     .replace(/"/g, "&quot;");
 }
 
-/** Infer mission-rail stage from board row or job */
-function stageForBoardRow(row) {
-  const next = String(row?.next || "").toLowerCase();
-  const who = String(row?.who || "").toLowerCase();
-  if (who.includes("delco") || next.includes("soft ask call")) return "soft-ask";
-  if (next.includes("deposit")) return "deposit";
-  if (next.includes("watch accept") || next.includes("accept")) return "accept";
-  if (next.includes("draft") || next.includes("media polish")) return "quote";
-  if (next.includes("install") || next.includes("production")) return "install";
-  if (next.includes("soft ask")) return "soft-ask";
-  return "quote";
+function jobNeedsChance(j) {
+  return j.status === "close-prep" || j.status === "pending-send" || j.status === "hold";
 }
 
-function stageForJob(job) {
-  if (!job) return "lead";
-  if (job.id?.includes("delco") || job.status === "close-prep") return "soft-ask";
-  if (job.status === "pending-send") return "accept";
-  if (job.status === "practice") return "lead";
-  if (job.type === "dekwave") return "quote";
-  if (job.status === "active") return "soft-ask";
-  if (job.status === "hold") return "quote";
-  const st = job.station || "";
-  if (st === "front-desk" || st === "lead-lake") return "lead";
-  if (st === "quote-forge" || st === "margin-vault" || st === "dekwave-dock") return "quote";
-  if (st === "chance-gate") return job.status === "pending-send" ? "accept" : "soft-ask";
-  if (st === "deposit-safe") return "deposit";
-  if (st === "bay" || st === "install-bay") return "install";
-  return "quote";
+function plainStatus(job) {
+  if (!job) return "";
+  if (job.id?.includes("delco")) return "Soft Ask · not sent";
+  if (job.status === "pending-send") return "Pending Chance SEND";
+  if (job.status === "close-prep") return "Close prep";
+  if (job.status === "hold") return "HOLD";
+  if (job.status === "practice") return "Practice only";
+  return job.status || "Active";
 }
 
-function stageIndex(id) {
-  const i = RAIL_STAGES.findIndex((s) => s.id === id);
-  return i < 0 ? 0 : i;
+function nextActionPlain(stepIdx) {
+  const steps = getCompanionSteps();
+  if (steps[stepIdx]) return steps[stepIdx].title + " — " + (steps[stepIdx].body || "").split(".")[0] + ".";
+  return "Soft Ask path ready when you are.";
+}
+
+function nextActionForJob(job, stepIdx) {
+  if (job?.id?.includes("delco")) return nextActionPlain(stepIdx);
+  if (job?.boardNext) return job.boardNext;
+  return plainStatus(job);
+}
+
+function syncOpsMeters() {
+  const need = document.getElementById("meter-need-you");
+  const delco = document.getElementById("meter-delco");
+  if (!shopData) return;
+  const snap = shopData.boardSnapshot;
+  const needing = snap?.sendReadyWaitingChanceGO ?? shopData.jobs.filter((j) => jobNeedsChance(j)).length;
+  if (need) need.textContent = String(needing);
+  if (delco) {
+    const stall = (shopData.meta && shopData.meta.delcoStallHours) || 48;
+    delco.textContent = `~${stall}h stall`;
+  }
 }
 
 function boardRows() {
@@ -219,7 +645,6 @@ function boardRows() {
     return snap.top5.map((row, i) => ({
       ...row,
       rank: i + 1,
-      stage: stageForBoardRow(row),
       jobId: matchJobId(row),
     }));
   }
@@ -228,7 +653,6 @@ function boardRows() {
     who: (j.title || "").split("—")[0].trim(),
     next: j.boardNext || plainStatus(j),
     rank: j.boardRank || i + 1,
-    stage: stageForJob(j),
     jobId: j.id,
   }));
 }
@@ -239,120 +663,21 @@ function matchJobId(row) {
   const who = String(row?.who || "").toLowerCase();
   const byProp = jobs.find((j) => j.wrapstart?.proposalId === id);
   if (byProp) return byProp.id;
-  if (who.includes("delco")) {
-    const d = jobs.find((j) => j.id?.includes("delco"));
-    if (d) return d.id;
-  }
-  if (who.includes("amit")) {
-    const a = jobs.find((j) => j.id?.includes("amit"));
-    if (a) return a.id;
-  }
+  if (who.includes("delco")) return jobs.find((j) => j.id?.includes("delco"))?.id || "";
+  if (who.includes("amit")) return jobs.find((j) => j.id?.includes("amit"))?.id || "";
   return "";
 }
 
-function renderMissionRail() {
-  const rail = document.getElementById("mission-rail");
-  if (!rail || !shopData) return;
-  const rows = boardRows();
-  const activeIdx = stageIndex(activeStageId);
-
-  rail.innerHTML = RAIL_STAGES.map((stage, idx) => {
-    const jobsHere = rows.filter((r) => r.stage === stage.id);
-    const state =
-      stage.id === activeStageId ? "active" : idx < activeIdx ? "done" : "upcoming";
-    const chips = jobsHere
-      .map((r) => {
-        const isActive =
-          (activeJob && r.jobId && activeJob.id === r.jobId) ||
-          (!activeJob && r.who?.toLowerCase().includes("delco") && stage.id === "soft-ask");
-        return `<button type="button" class="rail-chip ${isActive ? "active-job" : ""}" data-rank="${r.rank}" data-job="${escapeHtml(r.jobId || "")}" data-stage="${stage.id}" title="${escapeHtml(r.next)}">${escapeHtml(r.who)} · ${escapeHtml(r.id)}</button>`;
-      })
-      .join("");
-    return `
-      <article class="rail-node ${state} ${jobsHere.length ? "has-jobs" : ""}" data-stage="${stage.id}">
-        <div class="rail-spine">
-          <span class="rail-dot" aria-hidden="true"></span>
-          <span class="rail-line" aria-hidden="true"></span>
-        </div>
-        <div class="rail-body">
-          <div class="rail-label-row">
-            <span class="rail-label">${escapeHtml(stage.label)}</span>
-            <span class="rail-idx">0${idx + 1}</span>
-          </div>
-          ${chips ? `<div class="rail-jobs">${chips}</div>` : `<p class="rail-empty">${state === "done" ? "cleared" : state === "active" ? "active gate" : "standby"}</p>`}
-        </div>
-      </article>`;
-  }).join("");
-
-  rail.querySelectorAll(".rail-chip").forEach((btn) => {
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const jobId = btn.getAttribute("data-job");
-      const stage = btn.getAttribute("data-stage");
-      if (stage) activeStageId = stage;
-      if (jobId) focusJobById(jobId);
-      else {
-        const who = btn.textContent.split("·")[0].trim();
-        showToast(`Focused · ${who} @ ${stageLabel(stage)}`);
-        renderMissionRail();
-        renderRankList();
-      }
-    });
-  });
-  rail.querySelectorAll(".rail-node.has-jobs").forEach((node) => {
-    node.addEventListener("click", () => {
-      const stage = node.getAttribute("data-stage");
-      if (!stage) return;
-      activeStageId = stage;
-      const first = rows.find((r) => r.stage === stage && r.jobId);
-      if (first?.jobId) focusJobById(first.jobId);
-      else {
-        renderMissionRail();
-        renderRankList();
-      }
-    });
-  });
-}
-
-function stageLabel(id) {
-  return RAIL_STAGES.find((s) => s.id === id)?.label || id;
-}
-
-function renderRankList() {
-  const list = document.getElementById("rank-list");
-  const asof = document.getElementById("rank-asof");
-  if (!list || !shopData) return;
-  const snap = shopData.boardSnapshot;
-  if (asof) asof.textContent = snap?.asOf || shopData.meta?.date || "";
-  const rows = boardRows();
-  list.innerHTML = rows
-    .map((r) => {
-      const isActive =
-        (activeJob && r.jobId && activeJob.id === r.jobId) ||
-        (!!r.who?.toLowerCase().includes("delco") && (!activeJob || activeJob.id?.includes("delco")));
-      return `<button type="button" class="rank-row ${isActive ? "active" : ""}" data-job="${escapeHtml(r.jobId || "")}" data-stage="${r.stage}">
-        <span class="rank-num">#${r.rank}</span>
-        <span>
-          <span class="rank-who">${escapeHtml(r.who)}<span class="rank-id">${escapeHtml(r.id)}</span></span>
-          <p class="rank-next">${escapeHtml(r.next)}</p>
-          <span class="rank-stage">${escapeHtml(stageLabel(r.stage))}</span>
-        </span>
-      </button>`;
-    })
-    .join("");
-  list.querySelectorAll(".rank-row").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const jobId = btn.getAttribute("data-job");
-      const stage = btn.getAttribute("data-stage");
-      if (stage) activeStageId = stage;
-      if (jobId) focusJobById(jobId);
-      else {
-        renderMissionRail();
-        renderRankList();
-        showToast(`Board · ${btn.querySelector(".rank-who")?.childNodes[0]?.textContent || "row"}`);
-      }
-    });
-  });
+function boardCardHtml(job, hot) {
+  const rank = job.boardRank || (hot ? 1 : "·");
+  const next = job.boardNext || plainStatus(job);
+  return `<button type="button" class="board-card ${hot ? "hot" : ""}" data-job="${escapeHtml(job.id)}">
+    <div class="bc-top">
+      <span class="bc-title">${escapeHtml((job.title || "").split("—")[0].trim())}</span>
+      <span class="bc-rank">#${rank}</span>
+    </div>
+    <p class="bc-next">${escapeHtml(next)}</p>
+  </button>`;
 }
 
 function setBoardOpen(open) {
@@ -366,374 +691,144 @@ function renderBoardPanel() {
   const listEl = document.getElementById("board-list");
   if (!hotEl || !listEl || !shopData) return;
   const jobs = shopData.jobs || [];
-  const boss = jobs.find((j) => j.id === ((shopData.meta && shopData.meta.defaultJobId) || "job-delco-pr0014")) || jobs[0];
-  const sides = jobs.filter((j) => j !== boss);
+  const boss =
+    jobs.find((j) => j.id === ((shopData.meta && shopData.meta.defaultJobId) || "job-delco-pr0014")) ||
+    jobs[0];
   hotEl.innerHTML = boss ? boardCardHtml(boss, true) : "";
   const snap = shopData.boardSnapshot;
   if (snap?.top5?.length) {
-    listEl.innerHTML =
-      snap.top5
-        .slice(1)
-        .map((row) => {
-          const match = jobs.find(
-            (j) =>
-              (j.wrapstart && j.wrapstart.proposalId === row.id) ||
-              j.id?.includes(row.id.toLowerCase().replace("-", ""))
-          );
-          if (match) return boardCardHtml(match, false);
-          return `<button type="button" class="board-card" data-job="" disabled>
-        <div class="bc-top"><span class="bc-title">${escapeHtml(row.who)} · ${escapeHtml(row.id)}</span></div>
-        <p class="bc-next">${escapeHtml(row.next)}</p>
-      </button>`;
-        })
-        .join("") +
-      sides
-        .filter(
+    listEl.innerHTML = snap.top5
+      .slice(1)
+      .map((row) => {
+        const match = jobs.find(
           (j) =>
-            !snap.top5.some(
-              (t) => j.wrapstart?.proposalId === t.id || j.id?.includes("delco")
-            )
-        )
-        .slice(0, 4)
-        .map((j) => boardCardHtml(j, false))
-        .join("");
+            (j.wrapstart && j.wrapstart.proposalId === row.id) ||
+            j.id?.includes(String(row.id).toLowerCase().replace("-", ""))
+        );
+        if (match) return boardCardHtml(match, false);
+        return `<button type="button" class="board-card" data-job="" disabled>
+          <div class="bc-top"><span class="bc-title">${escapeHtml(row.who)} · ${escapeHtml(row.id)}</span></div>
+          <p class="bc-next">${escapeHtml(row.next)}</p>
+        </button>`;
+      })
+      .join("");
   } else {
-    listEl.innerHTML = sides.map((j) => boardCardHtml(j, false)).join("");
+    listEl.innerHTML = jobs
+      .filter((j) => j !== boss)
+      .slice(0, 6)
+      .map((j) => boardCardHtml(j, false))
+      .join("");
   }
-  document.querySelectorAll("#board-panel .board-card[data-job]").forEach((btn) => {
-    const id = btn.getAttribute("data-job");
-    if (!id) return;
-    btn.addEventListener("click", () => focusJobById(id));
+  [...hotEl.querySelectorAll(".board-card"), ...listEl.querySelectorAll(".board-card")].forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-job");
+      if (id) focusJobById(id);
+      setBoardOpen(false);
+    });
   });
 }
 
-function boardCardHtml(job, isHot) {
-  const next = nextActionForJob(job, job.id?.includes("delco") ? companionStep : 0);
-  const short = (job.title || "").split("—")[0].trim();
-  const rank = job.boardRank ? `#${job.boardRank} · ` : isHot ? "#1 · " : "";
-  return `<button type="button" class="board-card ${isHot ? "hot" : ""}" data-job="${escapeHtml(job.id)}">
-    <div class="bc-top">
-      <span class="bc-title">${rank}${escapeHtml(short)}</span>
-      <span class="bc-status">${escapeHtml(plainStatus(job))}</span>
-    </div>
-    <p class="bc-next">${escapeHtml(next)}</p>
-    <div class="bc-money">${escapeHtml(moneyLine(job))}</div>
-  </button>`;
-}
-
-function focusJobById(id) {
-  if (!shopData || !id) return;
-  const job = shopData.jobs.find((j) => j.id === id);
-  if (!job) return;
-  activeStageId = stageForJob(job);
-  openJob(job);
-  setBoardOpen(false);
-  renderMissionRail();
-  renderRankList();
-  showToast(`Focused · ${job.title.split("—")[0].trim()}`);
-}
-
-function shortMission(m) {
-  const raw = String(m || "");
-  if (raw.length <= 78) return raw;
-  const cut = raw.slice(0, 78);
-  const sp = cut.lastIndexOf(" ");
-  return (sp > 40 ? cut.slice(0, sp) : cut) + "…";
-}
-
-function populateUI() {
-  const snap = shopData.boardSnapshot;
-  const mission =
-    snap && snap.hot
-      ? `${snap.hot.label} #${snap.hot.rank} · ${snap.sendReadyWaitingChanceGO} waiting GO · outbound paused · AI OFF`
-      : shopData.meta.mission || "Kind + profitable. Soft Ask. AI OFF.";
-  const chip = document.getElementById("mission-chip");
-  const textEl = chip?.querySelector(".mission-text");
-  if (textEl) textEl.textContent = shortMission(mission);
-  else if (chip) chip.textContent = shortMission(mission);
-  if (chip) chip.title = shopData.meta.mission || mission;
-
-  const lanesList = document.getElementById("lanes-list");
-  lanesList.innerHTML = "";
-  for (const lane of shopData.lanes) {
-    const card = document.createElement("div");
-    card.className = "lane-card";
-    card.style.setProperty("--lane-color", lane.color);
-    card.innerHTML = `
-      <h3>${lane.name}</h3>
-      <p>${lane.summary}</p>
-      <div class="roles">${lane.roles.map((r) => `<span class="role-pill">${r}</span>`).join("")}</div>
-    `;
-    lanesList.appendChild(card);
-  }
-
-  const rulesList = document.getElementById("rules-list");
-  rulesList.innerHTML = "";
-  for (const rule of shopData.hardRules) {
-    const chipEl = document.createElement("span");
-    chipEl.className = "rule-chip";
-    chipEl.setAttribute("role", "listitem");
-    chipEl.textContent = rule.title;
-    chipEl.title = rule.detail;
-    rulesList.appendChild(chipEl);
-  }
-
-  const flow = document.getElementById("flow-strip");
-  if (flow) {
-    flow.innerHTML = (shopData.leadFlow || [])
-      .map((s) => `<span class="flow-step">${s}</span>`)
-      .join("");
-  }
-
-  populateFutureCards();
-  syncAiOffBadge();
-  syncHotCard(null);
-  renderMissionRail();
-  renderRankList();
-}
-
-function populateFutureCards() {
-  const wrap = document.getElementById("future-cards");
-  if (!wrap) return;
-  const cards = shopData.futureCards || [];
-  wrap.innerHTML = cards
-    .map(
-      (c) => `
-    <article class="future-card phase-${escapeHtml(c.phase)}">
-      <span class="phase-pill">Phase ${escapeHtml(c.phase)}</span>
-      <h3>${escapeHtml(c.title)}</h3>
-      <p>${escapeHtml(c.blurb)}</p>
-    </article>`
-    )
-    .join("");
-}
-
-function syncAiOffBadge() {
-  const badge = document.getElementById("ai-off-badge");
-  if (!badge) return;
-  badge.innerHTML = 'AI OFF<span class="ai-off-sub">Engage OFF · Answer Off</span>';
-  badge.title = "Engage OFF · Answer calls Off · hardcoded — never wire live AI ON";
-  badge.style.background = "";
-}
-
-function openFuturePanel() {
-  populateFutureCards();
-  setMoreOpen(true);
-  showToast("Future is under More — AI stays OFF");
-}
-
-function closeFuturePanel() {
-  const panel = document.getElementById("future-panel");
-  if (panel) panel.classList.add("hidden");
-}
-
-function confClass(c) {
-  if (c === "high") return "high";
-  if (c === "low") return "low";
-  return "medium";
-}
-
-function confLabel(c) {
-  if (c === "high") return "High — process / rules solid";
-  if (c === "low") return "Low / HOLD — Chance judgment";
-  return "Medium — quoting judgment";
-}
-
-function getFeedbackForStep(jobId, stepId) {
-  return feedbackStore.filter((f) => f.jobId === jobId && f.stepId === stepId);
-}
-
-function plainStatus(job) {
-  const s = job.status || "";
-  if (job.id?.includes("delco")) return "Soft Ask · not sent";
-  if (s === "close-prep") return "Close prep · not sent";
-  if (s === "ready") return "Ready · waiting on you";
-  if (s === "pending-send") return "Waiting send · your call";
-  if (s === "hold") return "On hold";
-  if (s === "active") return "Active Soft Ask";
-  if (s === "practice") return "Practice only";
-  return s.replace(/-/g, " ") || "In shop";
-}
-
-function syncHotCard(job) {
-  const titleEl = document.getElementById("hot-title");
-  const subEl = document.getElementById("hot-sub");
-  if (!titleEl || !subEl) return;
-  const j =
-    job ||
-    (shopData &&
-      shopData.jobs.find(
-        (x) => x.id === ((shopData.meta && shopData.meta.defaultJobId) || "job-delco-pr0014")
-      ));
-  if (!j) {
-    titleEl.textContent = "No hot job";
-    subEl.textContent = "Pick a node on the rail";
-    return;
-  }
-  const short = (j.title || "").split("—")[0].trim() || j.title;
-  const prop = j.wrapstart && j.wrapstart.proposalId ? ` ${j.wrapstart.proposalId}` : "";
-  titleEl.textContent = short.includes("Delco") ? `Delco${prop || " PR-0014"}` : short;
-  const boardNext = j.boardNext || plainStatus(j);
-  subEl.textContent = j.id?.includes("delco")
-    ? "Soft Ask · not sent · HOLD auto-send"
-    : boardNext;
-}
-
-function nextActionPlain(stepIndex) {
-  const job =
-    activeJob ||
-    (shopData &&
-      shopData.jobs.find(
-        (x) => x.id === ((shopData.meta && shopData.meta.defaultJobId) || "job-delco-pr0014")
-      ));
-  return nextActionForJob(job, stepIndex);
-}
-
-function syncNextAction() {
-  const el = document.getElementById("next-action");
-  if (el) el.textContent = nextActionPlain(companionStep);
-  const board = document.getElementById("board-panel");
-  if (board && !board.classList.contains("hidden")) renderBoardPanel();
-  syncOpsMeters();
+function focusJobById(jobId) {
+  const job = shopData?.jobs?.find((j) => j.id === jobId);
+  if (job) openJob(job);
 }
 
 function openJob(job) {
   activeJob = job;
-  activeStageId = stageForJob(job);
-  if (detailPanel) detailPanel.classList.remove("hidden");
-  syncHotCard(job);
-
-  const ws = job.wrapstart || {};
-  const pricing = job.pricing || null;
-  const pricingHtml = pricing
-    ? `<div class="pricing-chips">
-        <span class="pricing-chip">Fixed $${Number(pricing.fixedPretax).toLocaleString()} pretax</span>
-        <span class="pricing-chip alt">Folding $${Number(pricing.foldingPretax).toLocaleString()} pretax</span>
-      </div>`
-    : "";
-  const idsHtml = ws.proposalId
-    ? `<p class="ws-ids">Wrapstart · <code>${escapeHtml(ws.proposalId)}</code>${
-        ws.quoteId ? ` · <code>${escapeHtml(ws.quoteId)}</code>` : ""
-      }${ws.company ? ` · ${escapeHtml(ws.company)}` : ""}</p>`
-    : "";
-
-  if (detailHeader) {
-    detailHeader.innerHTML = `
-      <div class="job-title">${escapeHtml(job.title)}</div>
-      <div class="job-meta">
-        <span class="badge status-${escapeHtml(job.status)}">${escapeHtml(job.status)}</span>
-        <span class="badge type-${escapeHtml(job.type)}">${escapeHtml(job.type)}</span>
-        <span class="badge">${escapeHtml(job.vehicle)}</span>
-      </div>
-      ${idsHtml}
-      ${pricingHtml}
-      <p class="summary">${escapeHtml(job.summary)}</p>
-    `;
-  }
-
-  const cc = confClass(job.confidenceOverall);
-  if (confidenceMeter) {
-    confidenceMeter.innerHTML = `
-      <div class="cm-label">Jarvis confidence</div>
-      <div class="cm-bar"><div class="cm-fill ${cc}"></div></div>
-      <div class="cm-text ${cc}">${confLabel(job.confidenceOverall)}</div>
-    `;
-  }
-
-  const gate = document.getElementById("gate-controls");
-  if (gate) {
-    const showGate =
-      job.status === "close-prep" ||
-      job.status === "ready" ||
-      job.status === "pending-send" ||
-      job.id.includes("delco");
-    gate.classList.toggle("hidden", !showGate);
-  }
-
-  if (thinkPathEl) {
-    thinkPathEl.innerHTML = "";
-    for (const step of job.thinkPath || []) {
-      const li = document.createElement("li");
-      const fbs = getFeedbackForStep(job.id, step.id);
-      if (fbs.length) li.classList.add("has-feedback");
-      li.innerHTML = `
-        <div class="step-label">${escapeHtml(step.label)}</div>
-        <div class="step-detail">${escapeHtml(step.detail)}</div>
-        <span class="step-conf ${confClass(step.confidence)}">${escapeHtml(step.confidence)} · ${escapeHtml(step.stage)}</span>
-        ${fbs.map((f) => `<div class="fb-preview">💬 ${escapeHtml(f.text)}</div>`).join("")}
-      `;
-      li.addEventListener("click", () => openFeedbackModal(job, step));
-      thinkPathEl.appendChild(li);
-    }
-  }
-
-  if (job.id === "job-delco-pr0014" || (job.wrapstart && job.wrapstart.proposalId === "PR-0014")) {
-    renderCompanion(true);
-  }
+  syncHotCard();
   syncNextAction();
-  renderMissionRail();
-  renderRankList();
+  renderJobDetail(job);
+  wbNeedsRedraw = true;
+  drawWhiteboard(false);
+  showToast(`Focused · ${(job.title || "").split("—")[0].trim()}`);
 }
 
-function openFeedbackModal(job, step) {
-  activeStep = { job, step };
-  fbStepLabel.textContent = `${job.title} → ${step.label}`;
-  fbText.value = "";
-  feedbackModal.classList.remove("hidden");
-  fbText.focus();
-}
-
-function closeFeedbackModal() {
-  feedbackModal.classList.add("hidden");
-  activeStep = null;
-}
-
-function exportFeedback() {
-  const payload = {
-    exportedAt: new Date().toISOString(),
-    shop: shopData.meta.title,
-    version: VERSION_TAG,
-    count: feedbackStore.length,
-    feedback: feedbackStore,
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `wrap-shop-control-deck-feedback-${new Date().toISOString().slice(0, 10)}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-  showToast(`Exported ${feedbackStore.length} note(s)`);
-}
-
-document.getElementById("fb-cancel")?.addEventListener("click", closeFeedbackModal);
-document.getElementById("fb-save")?.addEventListener("click", () => {
-  if (!activeStep) return;
-  const text = fbText.value.trim();
-  if (!text) {
-    showToast("Type a note first");
-    return;
+function renderJobDetail(job) {
+  if (!job) return;
+  if (detailHeader) {
+    detailHeader.innerHTML = `<strong>${escapeHtml(job.title || "")}</strong><p class="hint-sm">${escapeHtml(job.summary || "")}</p>`;
   }
-  feedbackStore.push({
-    at: new Date().toISOString(),
-    jobId: activeStep.job.id,
-    stepId: activeStep.step.id,
-    stepLabel: activeStep.step.label,
-    text,
-  });
-  saveFeedback();
-  openJob(activeStep.job);
-  closeFeedbackModal();
-  showToast("Feedback saved locally");
-});
-document.getElementById("btn-export")?.addEventListener("click", exportFeedback);
-document.getElementById("btn-close-future")?.addEventListener("click", closeFuturePanel);
-document.getElementById("ai-off-badge")?.addEventListener("click", () => {
-  showToast("AI OFF locked — Engage OFF · Answer Off · never ON from deck");
-});
+  if (confidenceMeter) {
+    confidenceMeter.innerHTML = `<span class="rule-chip">confidence · ${escapeHtml(job.confidenceOverall || "—")}</span>`;
+  }
+  if (thinkPathEl) {
+    thinkPathEl.innerHTML = (job.thinkPath || [])
+      .map((s) => `<li><strong>${escapeHtml(s.label)}</strong> — ${escapeHtml(s.detail)}</li>`)
+      .join("");
+  }
+  const gate = document.getElementById("gate-controls");
+  if (gate) gate.classList.toggle("hidden", !(job.id?.includes("delco") || job.status === "close-prep"));
+  activeStep = { job, step: (job.thinkPath || [])[0] || { id: "x", label: job.title } };
+}
 
-function stubGateAction(source) {
-  const isGo = String(source).includes("go");
-  showToast(isGo ? STUB_TOAST_GO : STUB_TOAST_HOLD, isGo ? "go" : "hold");
+function syncHotCard() {
+  const title = document.getElementById("hot-title");
+  const sub = document.getElementById("hot-sub");
+  const job = activeJob || shopData?.jobs?.find((j) => j.id?.includes("delco"));
+  if (!job) return;
+  if (title) title.textContent = job.id?.includes("delco")
+    ? `Delco ${job.wrapstart?.proposalId || "PR-0014"}`
+    : (job.title || "").split("—")[0].trim();
+  if (sub) sub.textContent = job.id?.includes("delco") ? "Soft Ask · not sent" : plainStatus(job);
+}
+
+function syncNextAction() {
+  const el = document.getElementById("next-action");
+  const job = activeJob || shopData?.jobs?.find((j) => j.id?.includes("delco"));
+  if (!el) return;
+  el.textContent = nextActionForJob(job, job?.id?.includes("delco") ? companionStep : 0);
+}
+
+function populateUI() {
+  if (!shopData) return;
+  const chip = document.getElementById("mission-chip");
+  const textEl = chip?.querySelector(".mission-text");
+  const mission = shopData.meta?.mission || "";
+  if (textEl) textEl.textContent = mission;
+  else if (chip) chip.textContent = mission;
+
+  const lanes = document.getElementById("lanes-list");
+  if (lanes) {
+    lanes.innerHTML = (shopData.lanes || [])
+      .map(
+        (l) => `<div class="lane-card" style="border-left:3px solid ${escapeHtml(l.color || "#7ec8e3")}">
+        <h4>${escapeHtml(l.name)}</h4>
+        <p>${escapeHtml(l.summary)}</p>
+      </div>`
+      )
+      .join("");
+  }
+
+  const rules = document.getElementById("rules-list");
+  if (rules) {
+    const list = shopData.hardRules || shopData.rules || [
+      "AI OFF",
+      "No live send",
+      "Soft Ask name stays",
+      "50% deposit before Design",
+      "Chance = SEND gate",
+    ];
+    rules.innerHTML = list.map((r) => `<span class="rule-chip" role="listitem">${escapeHtml(typeof r === "string" ? r : r.label || r)}</span>`).join("");
+  }
+
+  const future = document.getElementById("future-cards");
+  if (future) {
+    future.innerHTML = (shopData.futureCards || [])
+      .map(
+        (c) => `<div class="future-card">
+        <h4>${escapeHtml(c.emoji || "")} ${escapeHtml(c.title || "")}</h4>
+        <p>${escapeHtml(c.blurb || "")}</p>
+      </div>`
+      )
+      .join("");
+  }
+
+  const flow = document.getElementById("flow-strip");
+  if (flow && shopData.flow) flow.textContent = (shopData.flow || []).join(" → ");
+
+  syncHotCard();
+  syncNextAction();
+  syncOpsMeters();
 }
 
 function getCompanionSteps() {
@@ -797,11 +892,7 @@ function setJarvisStatus(mode) {
   jarvisStatusMode = mode || "standby";
   const el = document.getElementById("jarvis-status");
   if (!el) return;
-  const map = {
-    listening: "listening",
-    briefing: "briefing Delco",
-    standby: "standby",
-  };
+  const map = { listening: "listening", briefing: "briefing Delco", standby: "standby" };
   el.textContent = map[jarvisStatusMode] || "standby";
   el.dataset.mode = jarvisStatusMode;
 }
@@ -821,49 +912,11 @@ function syncJarvisBrief() {
   }
 }
 
-function renderWhiteboard() {
-  const list = document.getElementById("wb-steps");
-  const sub = document.getElementById("wb-sub");
-  if (!list) return;
-  if (sub) {
-    const job = activeJob || shopData?.jobs?.find((j) => j.id?.includes("delco"));
-    const prop = job?.wrapstart?.proposalId || "PR-0014";
-    sub.textContent = `Delco ${prop}`;
-  }
-  list.innerHTML = WHITEBOARD_STEPS.map((s, idx) => {
-    let state = "upcoming";
-    if (idx < companionStep) state = "done";
-    if (idx === companionStep) state = "active";
-    return `<li class="wb-step ${state}" data-idx="${idx}">
-      <span class="wb-num">${idx + 1}</span>
-      <span class="wb-body">
-        <span class="wb-label">${escapeHtml(s.label)}</span>
-        <span class="wb-detail">${escapeHtml(s.detail)}</span>
-      </span>
-    </li>`;
-  }).join("");
-  list.querySelectorAll(".wb-step").forEach((li) => {
-    li.addEventListener("click", () => {
-      const idx = Number(li.getAttribute("data-idx"));
-      if (Number.isNaN(idx)) return;
-      companionStep = idx;
-      companionRevealed = Math.max(companionRevealed, companionStep);
-      renderCompanion(true);
-      if (jarvisOn) playJarvisBeep();
-    });
-  });
-}
-
 function applyJarvisMode() {
-  const strip = document.getElementById("jarvis-strip");
   const btn = document.getElementById("btn-jarvis");
   const stateEl = document.getElementById("jarvis-toggle-state");
   const muteBtn = document.getElementById("btn-jarvis-mute");
   document.body.classList.toggle("jarvis-on", jarvisOn);
-  if (strip) {
-    strip.hidden = !jarvisOn;
-    strip.classList.toggle("jarvis-off", !jarvisOn);
-  }
   if (btn) {
     btn.setAttribute("aria-pressed", jarvisOn ? "true" : "false");
     btn.classList.toggle("on", jarvisOn);
@@ -877,8 +930,8 @@ function applyJarvisMode() {
   const showBtn = document.getElementById("btn-show-steps");
   const stepsOpen = !document.getElementById("steps-panel")?.classList.contains("hidden");
   if (showBtn) showBtn.textContent = stepsOpen ? "Hide Jarvis" : "Jarvis thoughts";
-  renderWhiteboard();
   syncJarvisBrief();
+  syncWhiteboardToStep();
   if (jarvisOn) setJarvisStatus(jarvisListening ? "listening" : "briefing");
   else setJarvisStatus("standby");
 }
@@ -889,11 +942,12 @@ function setJarvisOn(on) {
   applyJarvisMode();
   showToast(
     jarvisOn
-      ? "Jarvis ON — Grok hub voice · whiteboard Soft Ask walkthrough"
+      ? "Jarvis ON — Grok hub voice · hologram body + whiteboard"
       : "Jarvis OFF — companion standby · Soft Ask path still available"
   );
   if (jarvisOn) {
-    setStepsOpen(true);
+    wbDrawProgress = 0;
+    drawWhiteboard(true);
     playJarvisBeep();
   }
 }
@@ -924,7 +978,7 @@ function toggleListening() {
 
 function startSpeechListen() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) return; // UI-only fallback
+  if (!SR) return;
   try {
     if (speechRec) {
       try { speechRec.stop(); } catch { /* ignore */ }
@@ -934,7 +988,7 @@ function startSpeechListen() {
     speechRec.interimResults = false;
     speechRec.lang = "en-US";
     speechRec.onresult = () => {
-      showToast("Heard you — Soft Ask walkthrough stays on-screen (no live STT actions)");
+      showToast("Heard you — Soft Ask walkthrough stays on hologram (no live STT actions)");
       jarvisListening = false;
       toggleListeningCleanup();
     };
@@ -980,7 +1034,13 @@ function stopSpeechListen() {
 function renderCompanion(force) {
   const feed = document.getElementById("companion-feed");
   const label = document.getElementById("companion-step-label");
-  if (!feed) return;
+  const label2 = document.getElementById("steps-step-label");
+  if (!feed) {
+    syncNextAction();
+    syncJarvisBrief();
+    syncWhiteboardToStep();
+    return;
+  }
   const steps = getCompanionSteps();
   if (!steps.length) {
     feed.innerHTML = `<div class="companion-bubble revealed"><div class="cb-title">No script</div><p class="cb-body">Companion script missing from shop-brain.</p></div>`;
@@ -997,15 +1057,16 @@ function renderCompanion(force) {
       <div class="cb-title">${escapeHtml(s.title)}</div>
       <p class="cb-body" id="companion-type-body"></p>
     </article>
-    ${more > 0 ? `<div class="companion-bubble collapsed-hint">${more} more · Next / Back · whiteboard tracks Soft Ask</div>` : ""}
+    ${more > 0 ? `<div class="companion-bubble collapsed-hint">${more} more · Next / Back · hologram whiteboard tracks Soft Ask</div>` : ""}
   `;
-  const bodyEl = document.getElementById("companion-type-body");
-  typeReveal(bodyEl, s.body || "");
+  typeReveal(document.getElementById("companion-type-body"), s.body || "");
 
-  if (label) label.textContent = `${companionStep + 1} / ${steps.length}`;
+  const lab = `${companionStep + 1} / ${steps.length}`;
+  if (label) label.textContent = lab;
+  if (label2) label2.textContent = lab;
   syncNextAction();
-  renderWhiteboard();
   syncJarvisBrief();
+  syncWhiteboardToStep();
   if (force && jarvisOn) setJarvisStatus(jarvisListening ? "listening" : "briefing");
 }
 
@@ -1030,9 +1091,57 @@ function companionPrev() {
   }
 }
 
+function stubGateAction(source) {
+  const isGo = String(source).includes("go");
+  showToast(isGo ? STUB_TOAST_GO : STUB_TOAST_HOLD, isGo ? "go" : "hold");
+}
+
+function setStepsOpen(open) {
+  const panel = document.getElementById("steps-panel");
+  const btn = document.getElementById("btn-show-steps");
+  if (!panel) return;
+  panel.classList.toggle("hidden", !open);
+  if (btn) {
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+    btn.textContent = open ? "Hide Jarvis" : "Jarvis thoughts";
+  }
+  if (open) renderCompanion(true);
+}
+
+function setMoreOpen(open) {
+  const drawer = document.getElementById("more-drawer");
+  if (drawer) drawer.classList.toggle("hidden", !open);
+}
+
+function setDetailExtrasOpen(open) {
+  const extras = document.getElementById("detail-extras");
+  const btn = document.getElementById("btn-toggle-detail");
+  if (extras) extras.classList.toggle("hidden", !open);
+  if (btn) btn.textContent = open ? "Hide think path" : "Show think path";
+}
+
+function closeFeedbackModal() {
+  document.getElementById("feedback-modal")?.classList.add("hidden");
+}
+function closeFuturePanel() {
+  document.getElementById("future-panel")?.classList.add("hidden");
+}
+
+function exportFeedback() {
+  const blob = new Blob([JSON.stringify(feedbackStore, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `wrap-shop-control-deck-feedback-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast(`Exported ${feedbackStore.length} note(s)`);
+}
+
 function wireCompanionControls() {
   const next = document.getElementById("btn-comp-next");
   const prev = document.getElementById("btn-comp-prev");
+  const stepsNext = document.getElementById("btn-steps-next");
+  const stepsPrev = document.getElementById("btn-steps-prev");
   const go = document.getElementById("btn-comp-go");
   const hold = document.getElementById("btn-comp-hold");
   const gateGo = document.getElementById("btn-go");
@@ -1041,13 +1150,18 @@ function wireCompanionControls() {
   const jarvisBtn = document.getElementById("btn-jarvis");
   const muteBtn = document.getElementById("btn-jarvis-mute");
   const listenBtn = document.getElementById("btn-jarvis-listen");
+  const wbBtn = document.getElementById("btn-wb-cycle");
 
   if (next) next.addEventListener("click", companionNext);
   if (prev) prev.addEventListener("click", companionPrev);
+  if (stepsNext) stepsNext.addEventListener("click", companionNext);
+  if (stepsPrev) stepsPrev.addEventListener("click", companionPrev);
   if (go) go.addEventListener("click", () => stubGateAction("companion-go"));
   if (hold) hold.addEventListener("click", () => stubGateAction("companion-hold"));
   if (gateGo) gateGo.addEventListener("click", () => stubGateAction("detail-go"));
   if (gateHold) gateHold.addEventListener("click", () => stubGateAction("detail-hold"));
+  if (wbBtn) wbBtn.addEventListener("click", cycleWhiteboard);
+
   if (jarvisBtn && !jarvisBtn.dataset.wired) {
     jarvisBtn.dataset.wired = "1";
     jarvisBtn.addEventListener("click", (e) => {
@@ -1078,30 +1192,6 @@ function wireCompanionControls() {
       toggleListening();
     });
   }
-}
-
-function setStepsOpen(open) {
-  const panel = document.getElementById("steps-panel");
-  const btn = document.getElementById("btn-show-steps");
-  if (!panel) return;
-  panel.classList.toggle("hidden", !open);
-  if (btn) {
-    btn.setAttribute("aria-expanded", open ? "true" : "false");
-    btn.textContent = open ? "Hide Jarvis" : "Jarvis thoughts";
-  }
-  if (open) renderCompanion(true);
-}
-
-function setMoreOpen(open) {
-  const drawer = document.getElementById("more-drawer");
-  if (drawer) drawer.classList.toggle("hidden", !open);
-}
-
-function setDetailExtrasOpen(open) {
-  const extras = document.getElementById("detail-extras");
-  const btn = document.getElementById("btn-toggle-detail");
-  if (extras) extras.classList.toggle("hidden", !open);
-  if (btn) btn.textContent = open ? "Hide think path" : "Show think path";
 }
 
 function wireSimpleUi() {
@@ -1140,13 +1230,14 @@ function wireSimpleUi() {
   }
   if (hot) {
     hot.addEventListener("click", () => {
-      const defaultId = (shopData.meta && shopData.meta.defaultJobId) || "job-delco-pr0014";
+      const defaultId = (shopData?.meta && shopData.meta.defaultJobId) || "job-delco-pr0014";
       const job =
-        shopData.jobs.find((j) => j.id === defaultId) ||
-        shopData.jobs.find((j) => j.id.includes("delco"));
+        shopData?.jobs?.find((j) => j.id === defaultId) ||
+        shopData?.jobs?.find((j) => j.id.includes("delco"));
       if (job) {
-        activeStageId = "soft-ask";
         openJob(job);
+        wbMode = 0;
+        drawWhiteboard(true);
         showToast("Delco focused — Soft Ask #1");
       }
     });
@@ -1159,20 +1250,47 @@ function focusDelcoOnLoad() {
     shopData.jobs.find((j) => j.id === defaultId) ||
     shopData.jobs.find((j) => j.id.includes("delco"));
   if (!job) return;
-  activeStageId = "soft-ask";
-  openJob(job);
+  activeJob = job;
+  renderJobDetail(job);
+  syncHotCard();
+  syncNextAction();
 }
 
+document.getElementById("fb-cancel")?.addEventListener("click", closeFeedbackModal);
+document.getElementById("fb-save")?.addEventListener("click", () => {
+  if (!activeStep) return;
+  const text = fbText?.value.trim();
+  if (!text) {
+    showToast("Type a note first");
+    return;
+  }
+  feedbackStore.push({
+    at: new Date().toISOString(),
+    jobId: activeStep.job.id,
+    stepId: activeStep.step.id,
+    stepLabel: activeStep.step.label,
+    text,
+  });
+  saveFeedback();
+  closeFeedbackModal();
+  showToast("Feedback saved locally");
+});
+document.getElementById("btn-export")?.addEventListener("click", exportFeedback);
+document.getElementById("btn-close-future")?.addEventListener("click", closeFuturePanel);
+document.getElementById("ai-off-badge")?.addEventListener("click", () => {
+  showToast("AI OFF locked — Engage OFF · Answer Off · never ON from deck");
+});
+
 async function main() {
-  // Wire Jarvis / dock controls BEFORE data fetch so the toggle always works
-  // even if shop-brain.json fails (previous bug: early return left btn-jarvis dead).
   wireCompanionControls();
   wireSimpleUi();
   applyJarvisMode();
-  setStepsOpen(jarvisOn);
+  setStepsOpen(false);
   setDetailExtrasOpen(false);
   setBoardOpen(false);
   if (detailPanel) detailPanel.classList.add("hidden");
+
+  initHologram();
 
   try {
     const res = await fetch(DATA_URL);
@@ -1198,15 +1316,12 @@ async function main() {
   renderCompanion(false);
   applyJarvisMode();
   syncOpsMeters();
-  if (detailPanel) detailPanel.classList.add("hidden");
-  setStepsOpen(jarvisOn);
-  setDetailExtrasOpen(false);
-  setBoardOpen(false);
   focusDelcoOnLoad();
+  drawWhiteboard(true);
   showToast(
     jarvisOn
-      ? `${VERSION_TAG} — Jarvis ON · Delco Soft Ask · AI OFF · no live send`
-      : `${VERSION_TAG} — tap JARVIS to wake companion · AI OFF · no live send`
+      ? `${VERSION_TAG} — hologram ON · Delco Soft Ask · AI OFF · no live send`
+      : `${VERSION_TAG} — tap JARVIS to wake hologram · AI OFF · no live send`
   );
 }
 

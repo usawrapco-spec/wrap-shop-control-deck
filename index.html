@@ -3,11 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Control Deck v0.8.1-jarvis — USA Wrap Co</title>
+  <title>Control Deck v0.9-hologram — USA Wrap Co</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/"
+    }
+  }
+  </script>
 </head>
 <body class="jarvis-on">
   <div id="app">
@@ -19,7 +27,7 @@
         <span class="logo-mark" aria-hidden="true">◈</span>
         <div>
           <h1>CONTROL DECK</h1>
-          <p class="tagline">v0.8.1-jarvis · AI OFF · no live send</p>
+          <p class="tagline">v0.9-hologram · AI OFF · no live send</p>
         </div>
       </div>
       <div class="mission-chip" id="mission-chip" title="Shop mission">
@@ -38,7 +46,7 @@
       </div>
       <div class="top-actions">
         <button type="button" id="btn-board" class="btn ghost" title="On board">BOARD</button>
-        <button type="button" id="btn-jarvis" class="btn jarvis-toggle on" aria-pressed="true" title="Jarvis ON/OFF — Grok Bot voice · deck is the body · tap to toggle">
+        <button type="button" id="btn-jarvis" class="btn jarvis-toggle on" aria-pressed="true" title="Jarvis ON/OFF — Grok Bot voice · hologram body · tap to toggle">
           <span class="jarvis-toggle-mark" aria-hidden="true">◈</span>
           <span class="jarvis-toggle-label">JARVIS</span>
           <span class="jarvis-toggle-state" id="jarvis-toggle-state">ON</span>
@@ -51,54 +59,28 @@
       </div>
     </header>
 
-    <section id="jarvis-strip" class="jarvis-strip" aria-label="Jarvis companion">
-      <div class="jarvis-presence">
-        <div class="jarvis-avatar" aria-hidden="true">◈</div>
-        <div class="jarvis-id">
-          <div class="jarvis-name-row">
-            <h2 class="jarvis-name">JARVIS</h2>
-            <span class="jarvis-hub">Grok hub</span>
-          </div>
-          <p class="jarvis-status" id="jarvis-status">standby</p>
+    <main id="holo-stage" aria-label="Jarvis hologram stage">
+      <canvas id="holo-canvas"></canvas>
+
+      <div class="holo-hud" id="holo-hud">
+        <div class="holo-id">
+          <span class="holo-kicker">JARVIS · GROK HUB</span>
+          <span class="holo-status" id="jarvis-status" data-mode="briefing">briefing Delco</span>
         </div>
-        <p class="jarvis-brief" id="jarvis-brief" aria-live="polite">Soft Ask path ready when you are.</p>
-        <div class="jarvis-controls">
+        <p class="holo-brief" id="jarvis-brief" aria-live="polite">Soft Ask path ready when you are.</p>
+        <div class="holo-controls">
           <button type="button" id="btn-jarvis-mute" class="btn ghost jarvis-mute muted" aria-pressed="true" title="Voice beep muted by default">🔇 MUTE</button>
           <button type="button" id="btn-jarvis-listen" class="btn ghost jarvis-listen" title="Listening UI — Web Speech if available">🎤 LISTEN</button>
+          <button type="button" id="btn-wb-cycle" class="btn ghost" title="Cycle whiteboard: Soft Ask · jobs · email">⬜ BOARD VIEW</button>
+        </div>
+        <div class="holo-softask-chip" title="Soft Ask name stays">
+          <span class="sa-dot" aria-hidden="true"></span>
+          Soft Ask · Delco PR-0014
         </div>
       </div>
-      <aside id="whiteboard" class="whiteboard" aria-label="Soft Ask whiteboard">
-        <div class="wb-head">
-          <span class="wb-kicker">WHITEBOARD // SOFT ASK</span>
-          <span class="wb-sub" id="wb-sub">Delco PR-0014</span>
-        </div>
-        <ol id="wb-steps" class="wb-steps">
-          <!-- filled by app.js -->
-        </ol>
-      </aside>
-    </section>
 
-    <main id="stage-wrap" aria-label="Mission rail">
-      <div class="stage-head">
-        <div class="stage-title">
-          <span class="stage-kicker">MISSION RAIL</span>
-          <h2>Lead → Install pipeline</h2>
-        </div>
-        <p class="stage-note" id="hud-hint">Delco active node · ranked board beside rail · AI OFF</p>
-      </div>
-
-      <div class="stage-body">
-        <section class="mission-rail" id="mission-rail" aria-label="Pipeline stages">
-          <!-- filled by app.js -->
-        </section>
-
-        <aside class="rank-panel" aria-label="Ranked jobs">
-          <div class="rank-head">
-            <span class="rank-kicker">BOARD // TOP</span>
-            <span class="rank-sub" id="rank-asof">—</span>
-          </div>
-          <div id="rank-list" class="rank-list"></div>
-        </aside>
+      <div class="holo-fallback" id="holo-fallback" hidden>
+        <p>WebGL unavailable — Soft Ask dock still works. AI OFF.</p>
       </div>
     </main>
 
@@ -114,6 +96,9 @@
         <p class="next-action" id="next-action">Loading…</p>
         <div class="next-meta">
           <button type="button" id="btn-show-steps" class="link-btn" aria-expanded="false">Jarvis thoughts</button>
+          <button type="button" id="btn-comp-prev" class="btn ghost dock-nav">←</button>
+          <span id="companion-step-label" class="companion-step-label">1 / 4</span>
+          <button type="button" id="btn-comp-next" class="btn ghost dock-nav">→</button>
         </div>
       </div>
 
@@ -140,15 +125,15 @@
       <div class="steps-head">
         <div>
           <h2>Jarvis · Grok hub</h2>
-          <p class="hint-sm">One next action · Soft Ask walkthrough · typing reveal</p>
+          <p class="hint-sm">Voice = Grok Bot · body = hologram + whiteboard</p>
         </div>
         <button type="button" id="btn-hide-steps" class="btn-icon" title="Hide">✕</button>
       </div>
       <div id="companion-feed" class="companion-feed"></div>
       <div class="steps-nav">
-        <button type="button" id="btn-comp-prev" class="btn ghost">← Back</button>
-        <span id="companion-step-label" class="companion-step-label">1 / 4</span>
-        <button type="button" id="btn-comp-next" class="btn primary">Next →</button>
+        <button type="button" id="btn-steps-prev" class="btn ghost">← Back</button>
+        <span id="steps-step-label" class="companion-step-label">1 / 4</span>
+        <button type="button" id="btn-steps-next" class="btn primary">Next →</button>
       </div>
       <div id="detail-extras" class="detail-extras hidden">
         <div id="detail-header"></div>
@@ -170,7 +155,7 @@
       </div>
       <div class="more-actions">
         <button type="button" id="btn-export" class="btn ghost">⬇ Export feedback</button>
-        <button type="button" id="btn-mic" class="btn mic" title="Listening UI — Web Speech if available, else visual only" aria-pressed="false">🎤 listen</button>
+        <button type="button" id="btn-mic" class="btn mic" title="Listening UI" aria-pressed="false">🎤 listen</button>
       </div>
       <h3>Three lanes</h3>
       <div id="lanes-list"></div>
@@ -185,15 +170,10 @@
     <aside id="lanes-panel" class="sr-only" aria-hidden="true"><h2 class="rules-heading">Hard Rules</h2></aside>
     <aside id="companion-panel" class="sr-only" aria-hidden="true">
       <div class="companion-head"><div class="companion-avatar">◈</div><h2>Jarvis</h2><span class="companion-live">Grok hub</span></div>
-      <p class="companion-sub"></p>
-      <p class="companion-foot"></p>
-      <div class="companion-nav"></div>
-      <div class="companion-gate"></div>
     </aside>
     <aside id="future-panel" class="hidden" aria-hidden="true">
       <button type="button" id="btn-close-future" class="btn-icon" title="Close">✕</button>
-      <div class="future-head"><h2>Future</h2><p class="hint-sm"></p></div>
-      <p class="future-foot"></p>
+      <div class="future-head"><h2>Future</h2></div>
     </aside>
 
     <div id="tooltip" class="hidden"></div>
